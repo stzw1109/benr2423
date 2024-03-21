@@ -5,7 +5,7 @@ const port = process.env.PORT || 3000;
 app.use(express.json())
 
 app.get('/', (req, res) => {
-   res.send('Testing!')
+   res.send('Testing for class!')
 })
 
 app.listen(port, () => {
