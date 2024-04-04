@@ -4,8 +4,41 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json())
 
+//e.g using for registration
+app.post('/register',async(req,res) => {
+  //console.log(req.body);
+  let resq = await client.db("testing").collection("file_1").insertOne({
+        name: req.body.name,
+        age: req.body.age,
+        gender: req.body.gender,
+        faculty: req.body.faculty
+    });
+    res.send(resq);
+})
+
+//get read user profile
+app.get('/read/:username/:email',async(req,res) => {
+    console.log(req.params); 
+     let resq = await client.db("testing").collection("file_1").find({
+      name:req.params.username,
+      email: req.params.email
+    });
+
+     res.send(resq);
+})
+
+//update user profile
+app.patch('/update',(req,res) => {
+
+})
+
+//delete user profile
+app.delete('/delete',(req,res) => {
+
+})
+
 app.get('/', (req, res) => {
-   res.send('Te sting for class!')
+   res.send('Testing for class!')
 })
 
 app.listen(port, () => {
@@ -44,14 +77,15 @@ async function run() {
     */
 
    //to find the document with the said information
-   
+   /*
     let result = await client.db("testing").collection("file_1").find({name:'Samuel'},
     {
       //projection is used to select the fields to be displayed
       projection:{age:0,gender:0}
       }
         ).toArray();
-    
+   */ 
+   
    //update a document with the said information
    /*
     let result = await client.db("testing").collection("file_1").updateOne(
@@ -78,7 +112,7 @@ async function run() {
       }
     );
    */ 
-   console.log(result);
+   //console.log(result);
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
