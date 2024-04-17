@@ -26,10 +26,10 @@ const client = new MongoClient(uri, {
  }
 });
 
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
-const myPlaintextPassword = 's0/\/\P4$$w0rD';
-const someOtherPlaintextPassword = 'not_bacon';
+    const bcrypt = require('bcrypt');
+    const saltRounds = 10;
+    const myPlaintextPassword = 's0/\/\P4$$w0rD';
+    const someOtherPlaintextPassword = 'not_bacon';
 
 async function run() {
     try {
@@ -47,16 +47,19 @@ async function run() {
         console.log(isNotMatch); // Should be false
 
         // Insert the hashed password into MongoDB
-        let result = await client.db("testing").collection("file_1").insertOne({
-            name: "pzy",
-            password: hashedPassword
+        let result = await client.db("Restful_API").collection("user").insertOne({
+            username: "pzy",
+            password: hashedPassword,
+            email:"pzy@yeehai.com",
+            faculty: "FTKEK"
         });
 
         console.log(result);
+
     } catch (err) {
         console.error(err);
     } finally { n 
-        await client.close();
+        //await client.close();
     }
 }
 

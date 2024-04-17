@@ -7,23 +7,30 @@ app.use(express.json())
 
 //e.g using for registration
 app.post('/register',async(req,res) => {
-  //console.log(req.body);
+  let existing  = await client.db("Restful_API").collection("user").findOne({
+    name: req.body.username
+  });
 
-  const hash = bcrypt.hashSync(req.body.password, 10);
+  if (existing) {
+    res.status(400).send("username already exist")
+  } else {
+    const hash = bcrypt.hashSync(req.body.password, 10);
 
-  let resq = await client.db("testing").collection("file_1").insertOne({
+  let resq = await client.db("Restful_API").collection("user").insertOne({
         name: req.body.username,
         age: req.body.age,
         gender: req.body.gender,
         faculty: req.body.faculty,
         password: hash //req.body.password
-    });
+    })
     res.send(resq);
+  }
 })
 
+
 app.post('/login',async(req,res) => { 
-      let resp = await client.db("testing").collection("file_1").findOne({
-        username: req.body.username
+      let resp = await client.db("Restful_API").collection("user").findOne({
+        name: req.body.username
 })
   console.log(resp);
   console.log(req.body);
@@ -31,12 +38,18 @@ app.post('/login',async(req,res) => {
       if(!resp){
         res.send('User not found');
       }else{
-        if(bcrypt.compareSync(req.body.password,resp.password)==true){
-          res.send('Login successful');
-        } else{
-          res.send('Wrong Password');
-        
-        }
+       // Check if password is provided
+    if (req.body.password) {
+      if (bcrypt.compareSync(req.body.password, resp.password)) {
+        res.send('Login successful');
+      } else {
+        res.send('Wrong Password');
+      }
+    } else {
+      // Handle case where password is not provided
+      // This is where you might decide to return an error or a specific message
+      res.send('Password field is missing');
+    }
       }
       
 });
