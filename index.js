@@ -55,25 +55,49 @@ app.post('/login',async(req,res) => {
 });
 
 //get read user profile
-app.get('/read/:username/:email',async(req,res) => {
-    console.log(req.params); 
+app.get('/read/:id',async(req,res) => {
+   /* console.log(req.params); 
      let resq = await client.db("testing").collection("file_1").find({
       name:req.params.username,
       email: req.params.email
     });
 
      res.send(resq);
-})
+*/
+let rep = await client.db("testing").collection("file_1").findOne({
+  //username: req.params.username
+  _id: new ObjectId(req.params.id)
+
+});
+  res.send(rep);
+  console.log(req.params);
+  //console.log(rep);
+ })
 
 //update user profile
-app.patch('/update',(req,res) => {
+app.patch('/update/:id',async(req,res) => {
 
+      let require = await client.db("testing").collection("file_1").updateOne({
+        _id: new ObjectId(req.params.id)
+      },{
+        $set:{
+          username: req.body.username
+        }
+      });
+
+      res.send(require);
+    console.log(req.body);
 })
 
 //delete user profile
-app.delete('/delete',(req,res) => {
-
+app.delete('/delete/:id',async(req,res) => {
+  let delete_req = await client.db("testing").collection("file_1").deleteOne({
+    _id: new ObjectId(req.params.id)
+  });
+  res.send(delete_req);
+  console.log(req.params);  
 })
+
 
 app.get('/', (req, res) => {
    res.send('Testing for class!')
