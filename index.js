@@ -1,9 +1,11 @@
+
 const bcrypt = require('bcrypt');
 const express = require('express')
 const app = express()
 const port = process.env.PORT || 3000;
 
 app.use(express.json())
+app.use(express.static('public'));
 
 //e.g using for registration
 app.post('/register',async(req,res) => {
@@ -64,11 +66,11 @@ app.get('/read/:id',async(req,res) => {
 
      res.send(resq);
 */
-let rep = await client.db("testing").collection("file_1").findOne({
-  //username: req.params.username
-  _id: new ObjectId(req.params.id)
+    let rep = await client.db("testing").collection("file_1").findOne({
+      //username: req.params.username
+      _id: new ObjectId(req.params.id)
 
-});
+    });
   res.send(rep);
   console.log(req.params);
   //console.log(rep);
