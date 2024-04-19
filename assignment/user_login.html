@@ -52,11 +52,12 @@
     </div>
 
     <div class="input-group">
-        <button type="button">Sign Up</button>
+        <button type="button" onclick="registerUser()">Sign Up</button>
     </div>
     
 
-    <script>
+    <script> 
+        
         function registerUser() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
@@ -69,7 +70,22 @@
                 },
                 body: JSON.stringify({ username, password }), // Add other fields as needed
             })
-            .then(response => response.json())
+
+            .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text(); // Try to get the response text first
+            })
+
+            .then(text => {
+                if (text) {
+                    return JSON.parse(text); // Parse the text as JSON if it's not empty
+                } else {
+                    throw new Error('Empty response');
+                }
+            })
+
             .then(data => console.log(data))
             .catch((error) => {
                 console.error('Error:', error);
@@ -120,9 +136,10 @@
             alert('Login failed');
         }
     }
-
+    
     // Attach the loginUser function to the login button
-    document.querySelector('#login-button').addEventListener('click', loginUser);
+    //document.querySelector('#login-button').addEventListener('click', loginUser);
+    
     </script>
 </body>
 </html>

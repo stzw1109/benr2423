@@ -4,34 +4,45 @@ const app = express()
 const port = process.env.PORT || 3000;
 
 app.use(express.json())
+app.use(express.static('public'));
 
 //e.g using for registration
-app.post('/register',async(req,res) => {
-  let existing  = await client.db("Restful_API").collection("user").findOne({
-    name: req.body.username
+
+  app.post('/register',async(req,res) => {
+    let existing = await client.db("Assignment").collection("users").findOne({
+      name: req.body.username
+  }) || await client.db("Assignment").collection("users").findOne({
+      email: req.body.email
   });
 
-  if (existing) {
-    res.status(400).send("username already exist")
-  } else {
-    const hash = bcrypt.hashSync(req.body.password, 10);
-
-  let resq = await client.db("Restful_API").collection("user").insertOne({
-        name: req.body.username,
-        age: req.body.age,
-        gender: req.body.gender,
-        faculty: req.body.faculty,
-        password: hash //req.body.password
-    })
-    res.send(resq);
-  }
-})
+  
+    if (existing) {
+      res.status(400).send("username or email already exist")
+    } else {
+      const hash = bcrypt.hashSync(req.body.password, 10);
+  
+    let resq = await client.db("Assignment").collection("users").insertOne({
+          name: req.body.username,
+          password: hash,
+          email: req.body.email,
+          gender: req.body.gender,
+          collection: req.body.collection,
+          money: req.body.money
+      });
+      res.send(resq);
+    }
+  })
 
 
 app.post('/login',async(req,res) => { 
-      let resp = await client.db("Restful_API").collection("user").findOne({
+      let resp = (await client.db("Assignment").collection("users").findOne({
         name: req.body.username
-})
+})    
+    )||(
+        await client.db("Assignment").collection("users").findOne({
+        email: req.body.email
+        }));
+
   console.log(resp);
   console.log(req.body);
 
@@ -56,19 +67,13 @@ app.post('/login',async(req,res) => {
 
 //get read user profile
 app.get('/read/:id',async(req,res) => {
-   /* console.log(req.params); 
-     let resq = await client.db("testing").collection("file_1").find({
-      name:req.params.username,
-      email: req.params.email
-    });
-
-     res.send(resq);
-*/
-let rep = await client.db("testing").collection("file_1").findOne({
+  
+let rep = await client.db("Assignment").collection("users").findOne({
   //username: req.params.username
   _id: new ObjectId(req.params.id)
 
 });
+  
   res.send(rep);
   console.log(req.params);
   //console.log(rep);
@@ -77,11 +82,11 @@ let rep = await client.db("testing").collection("file_1").findOne({
 //update user profile
 app.patch('/update/:id',async(req,res) => {
 
-      let require = await client.db("testing").collection("file_1").updateOne({
+      let require = await client.db("Assignment").collection("users").updateOne({
         _id: new ObjectId(req.params.id)
       },{
         $set:{
-          username: req.body.username
+          collection: req.body.collection
         }
       });
 
@@ -91,7 +96,7 @@ app.patch('/update/:id',async(req,res) => {
 
 //delete user profile
 app.delete('/delete/:id',async(req,res) => {
-  let delete_req = await client.db("testing").collection("file_1").deleteOne({
+  let delete_req = await client.db("Assignment").collection("users").deleteOne({
     _id: new ObjectId(req.params.id)
   });
   res.send(delete_req);
