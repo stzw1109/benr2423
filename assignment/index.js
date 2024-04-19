@@ -8,14 +8,13 @@ app.use(express.static('public'));
 
 //e.g using for registration
 
-  app.post('/register',async(req,res) => {
+app.post('/register',async(req,res) => {
     let existing = await client.db("Assignment").collection("users").findOne({
       name: req.body.username
   }) || await client.db("Assignment").collection("users").findOne({
       email: req.body.email
   });
 
-  
     if (existing) {
       res.status(400).send("username or email already exist")
     } else {
@@ -33,6 +32,27 @@ app.use(express.static('public'));
     }
   })
 
+app.patch('/addfriend/:username',async(req,res) => {
+  let existing = await client.db("Assignment").collection("users").findOne({
+    name: req.body.friend
+});
+  if (existing) {
+    
+    let friend_addition = await client.db("Assignment").collection("users").updateOne({
+      name: req.params.username
+    },{
+      $push: {
+        friends: req.body.friend
+      }
+    });
+
+    res.send(friend_addition);
+    console.log(req.body);
+    
+  } else {
+    res.status(400).send("User does not exist")
+  }
+})
 
 app.post('/login',async(req,res) => { 
       let resp = (await client.db("Assignment").collection("users").findOne({
@@ -63,7 +83,7 @@ app.post('/login',async(req,res) => {
     }
       }
       
-});
+})
 
 //get read user profile
 app.get('/read/:id',async(req,res) => {
@@ -86,7 +106,7 @@ app.patch('/update/:id',async(req,res) => {
         _id: new ObjectId(req.params.id)
       },{
         $set:{
-          collection: req.body.collection
+          friends: req.body.friends
         }
       });
 
