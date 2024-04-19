@@ -49,7 +49,7 @@ app.patch('/addfriend/:username',async(req,res) => {
         let friend_addition = await client.db("Assignment").collection("users").updateOne({
           name: req.params.username
         },{
-          $push: {
+          $addToSet: {
             friends:  req.body.friend
           }
         });
@@ -75,7 +75,7 @@ app.patch('/addfriend/:username',async(req,res) => {
         let friend_addition = await client.db("Assignment").collection("users").updateOne({
           name: req.params.username
         }, {
-          $push: {
+          $addToSet: {
             friends: friend
           }
       });
