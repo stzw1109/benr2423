@@ -34,25 +34,57 @@ app.post('/register',async(req,res) => {
   })
 
 app.patch('/addfriend/:username',async(req,res) => {
-  let existing = await client.db("Assignment").collection("users").findOne({
-    name: req.body.friend
-});
-  if (existing) {
-    
-    let friend_addition = await client.db("Assignment").collection("users").updateOne({
-      name: req.params.username
-    },{
-      $push: {
-        friends: req.body.friend
-      }
-    });
+    // Assuming req.body.friends is an array of friend names
+  const friends = req.body.friend;
 
-    res.send(friend_addition);
-    console.log(req.body);
-    
-  } else {
-    res.status(400).send("User does not exist")
+  // Check if friends array is provided and not empty
+  if (!Array.isArray(friends) || friends.length === 0) {
+
+      let existing = await client.db("Assignment").collection("users").findOne({
+        name: req.body.friend
+      });
+
+      if (existing) {
+        //if array of friends not provded
+        let friend_addition = await client.db("Assignment").collection("users").updateOne({
+          name: req.params.username
+        },{
+          $push: {
+            friends:  req.body.friend
+          }
+        });
+
+        res.send(friend_addition);
+        console.log(req.body);
+        
+      } else {
+        res.status(400).send("User does not exist")
+      }
+      
+  }else{
+     //array of friends is present
+      for (const friend of friends) {
+        let existing = await client.db("Assignment").collection("users").findOne({
+          name: friend
+        });
+
+        if (!existing) {
+          return res.status(400).send(`User ${friend} does not exist`);
+        }
+
+        let friend_addition = await client.db("Assignment").collection("users").updateOne({
+          name: req.params.username
+        }, {
+          $push: {
+            friends: friend
+          }
+      });
+    }
+
+    // Send a response after all friends have been added
+    res.send({ message: 'Friends added successfully' });
   }
+ 
 })
 
 app.post('/login',async(req,res) => { 
@@ -106,7 +138,7 @@ app.patch('/update/:id',async(req,res) => {
       let require = await client.db("Assignment").collection("users").updateOne({
         _id: new ObjectId(req.params.id)
       },{
-        $set:{
+        $unset:{
           friends: req.body.friends
         }
       });
