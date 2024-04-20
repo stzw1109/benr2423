@@ -54,8 +54,16 @@ app.patch('/addfriend/:username',async(req,res) => {
           }
         });
 
-        res.send(friend_addition);
-        console.log(req.body);
+        let friend_addition2 = await client.db("Assignment").collection("users").updateOne({
+          name:req.body.friend
+        },{
+          $addToSet: {
+            friends: req.params.username
+          }
+        });
+        
+        res.send("friend added successfully");
+        console.log(friend_addition,friend_addition2);
         
       } else {
         res.status(400).send("User does not exist")
@@ -79,8 +87,15 @@ app.patch('/addfriend/:username',async(req,res) => {
             friends: friend
           }
       });
+        let friend_addition2 = await client.db("Assignment").collection("users").updateOne({
+            name:friend
+          },{
+            $addToSet: {
+              friends: req.params.username
+            }
+        });
     }
-
+    
     // Send a response after all friends have been added
     res.send({ message: 'Friends added successfully' });
   }
