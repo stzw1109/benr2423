@@ -31,7 +31,117 @@ app.post('/register',async(req,res) => {
       });
       res.send(resq);
     }
-  })
+})
+
+app.post('/chest' ,async(req,res) => {
+  let existing = await client.db("Assignment").collection("chests").findOne({
+    chest: req.body.chest_name
+});
+  if (existing) {
+    res.status(400).send("Chest already exist")
+  } else {
+    let chest = await client.db("Assignment").collection("chests").insertOne({
+      chest: req.body.chest_name
+    });
+    res.send(chest);
+    }
+  }
+)
+
+app.patch('/chestupdate/:chestId',async(req,res) => {
+  const Character = req.body.character_name;
+
+  if(Array.isArray(Character)){
+
+    let existing = await client.db("Assignment").collection("chests").findOne({
+      _id: new ObjectId(req.params.chestId)
+    });
+    let existing2 = await client.db("Assignment").collection("characters").findOne({
+      name: Character
+    });
+
+    if (!existing && !existing2) {
+      res.status(400).send("Chest does not exist")
+    } else {
+      let chest = await client.db("Assignment").collection("chests").updateOne({
+        _id: new ObjectId(req.params.chestId)
+      },{
+        $addToSet:{
+          //chest: req.body.chest_name,
+          characters:{
+            $each:Character
+          }
+        }
+      });
+      res.send({message: 'Characters added to chest'});
+      }
+  }else{
+
+    let existing = await client.db("Assignment").collection("chests").findOne({
+      _id: new ObjectId(req.params.chestId)
+    });
+    let existing2 = await client.db("Assignment").collection("characters").findOne({
+      name: Character
+    });
+
+    if (!existing && !existing2) {
+      res.status(400).send("Chest does not exist")
+    } else {
+      let chest = await client.db("Assignment").collection("chests").updateOne({
+        _id: new ObjectId(req.params.chestId)
+      },{
+        $addToSet:{
+          //chest: req.body.chest_name,
+          characters:req.body.character_name
+        }
+      });
+      res.send({message: 'Character added to chest'});
+      }
+  }
+  
+  }
+)
+
+app.post('/character' ,async(req,res) => {
+  let existing = await client.db("Assignment").collection("characters").findOne({
+    name: req.body.character_name
+});
+  if (existing) {
+    res.status(400).send("Character already exist")
+  } else {
+    let character = await client.db("Assignment").collection("characters").insertOne({
+      name: req.body.character_name,
+      health: req.body.health,
+      attack: req.body.attack,
+      defense: req.body.defense,
+      type: req.body.type
+    });
+    res.send(character);
+    }
+  }
+)
+
+app.patch('/characterupdate/:charactername',async(req,res) => {
+  let existing = await client.db("Assignment").collection("characters").findOne({
+    name: req.params.charactername
+  });
+  if (!existing) {
+    res.status(400).send("Character does not exist")
+  } else {
+    let character = await client.db("Assignment").collection("characters").updateOne({
+      name: req.params.charactername
+    },{
+      $set:{
+        health: req.body.health,
+        attack: req.body.attack,
+        defense: req.body.defense,
+        type: req.body.type
+      }
+    });
+    res.send(character);
+    }
+  }
+)
 
 app.patch('/addfriend/:username',async(req,res) => {
     // Assuming req.body.friends is an array of friend names

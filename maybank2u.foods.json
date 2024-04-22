@@ -1,0 +1,169 @@
+[{
+  "_id": {
+    "$oid": "6625b7be19a120d17f92294f"
+  },
+  "name": "Nasi Lemak",
+  "quantity": 10,
+  "ingredients": [
+    {
+      "type": "ikan bilis",
+      "amount": 5
+    },
+    {
+      "type": "rice",
+      "amount": 10
+    },
+    {
+      "type": "telur",
+      "amount": 1
+    },
+    {}
+  ],
+  "price": 10,
+  "category": "food"
+},
+{
+  "_id": {
+    "$oid": "6625b89f19a120d17f922951"
+  },
+  "name": "Teh Tarik",
+  "quantity": 50,
+  "ingredients": [
+    {
+      "type": "Teh",
+      "amount": 1
+    },
+    {
+      "type": "Gula",
+      "amount": 100
+    },
+    {
+      "type": "Susu",
+      "amount": 800
+    }
+  ],
+  "price": 5,
+  "category": "drink"
+},
+{
+  "_id": {
+    "$oid": "6625b90519a120d17f922952"
+  },
+  "name": "Karipap",
+  "quantity": 8,
+  "ingredients": [
+    {
+      "type": "Kari",
+      "amount": 3
+    },
+    {
+      "type": "Kentang",
+      "amount": 3
+    },
+    {
+      "type": "Tepung",
+      "amount": 1
+    }
+  ],
+  "price": 1,
+  "category": "snack"
+},
+{
+  "_id": {
+    "$oid": "6625b94519a120d17f922953"
+  },
+  "name": "Lays",
+  "quantity": 1,
+  "ingredients": [
+    {
+      "type": "Ajinomoto",
+      "amount": 30
+    },
+    {
+      "type": "Kentang",
+      "amount": 1
+    },
+    {
+      "type": "Garam",
+      "amount": 30
+    }
+  ],
+  "price": 3,
+  "category": "junk"
+},
+{
+  "_id": {
+    "$oid": "6625c94019a120d17f922954"
+  },
+  "name": "Roti Canai",
+  "quantity": 4,
+  "ingredients": [
+    {
+      "type": "Tepung",
+      "amount": 1
+    },
+    {
+      "type": "Gula",
+      "amount": 1
+    },
+    {
+      "type": "Mentega",
+      "amount": 1
+    }
+  ],
+  "price": 1,
+  "category": "food"
+},
+{
+  "_id": {
+    "$oid": "6625c98f19a120d17f922955"
+  },
+  "name": "Coke",
+  "quantity": 32,
+  "ingredients": [
+    {
+      "type": "Gula",
+      "amount": 1000
+    }
+  ],
+  "price": 4,
+  "category": "drink"
+},
+{
+  "_id": {
+    "$oid": "6625ce3c19a120d17f922956"
+  },
+  "name": "Cendol Melaka",
+  "quantity": 1,
+  "ingredients": [
+    {
+      "type": "Gula",
+      "amount": 20
+    },
+    {
+      "type": "Ais",
+      "amount": 10
+    },
+    {
+      "type": "Cendol",
+      "amount": 20
+    }
+  ],
+  "price": 12,
+  "category": "snack"
+},
+{
+  "_id": {
+    "$oid": "6625ce8219a120d17f922957"
+  },
+  "name": "Lollipop",
+  "quantity": 1,
+  "ingredients": [
+    {
+      "type": "Gula",
+      "amount": 200
+    }
+  ],
+  "price": 1,
+  "category": "junk"
+}]
