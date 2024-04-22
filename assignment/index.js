@@ -48,6 +48,70 @@ app.post('/chest' ,async(req,res) => {
   }
 )
 
+app.post('/character' ,async(req,res) => {
+  let existing = await client.db("Assignment").collection("characters").findOne({
+    name: req.body.character_name
+});
+  if (existing) {
+    res.status(400).send("Character already exist")
+  } else {
+    let character = await client.db("Assignment").collection("characters").insertOne({
+      name: req.body.character_name,
+      health: req.body.health,
+      attack: req.body.attack,
+      defense: req.body.defense,
+      type: req.body.type
+    });
+    res.send(character);
+    }
+  }
+)
+
+app.post('/login',async(req,res) => { 
+  let resp = (await client.db("Assignment").collection("users").findOne({
+    name: req.body.username
+})    
+)||(
+    await client.db("Assignment").collection("users").findOne({
+    email: req.body.email
+    }));
+
+console.log(resp);
+console.log(req.body);
+
+  if(!resp){
+    res.send('User not found');
+  }else{
+   // Check if password is provided
+if (req.body.password) {
+  if (bcrypt.compareSync(req.body.password, resp.password)) {
+    res.send('Login successful');
+  } else {
+    res.send('Wrong Password');
+  }
+} else {
+  // Handle case where password is not provided
+  // This is where you might decide to return an error or a specific message
+  res.send('Password field is missing');
+}
+  }
+  
+})
+
+//get read user profile
+app.get('/read/:id',async(req,res) => {
+  
+  let rep = await client.db("Assignment").collection("users").findOne({
+    //username: req.params.username
+    _id: new ObjectId(req.params.id)
+  
+  });
+    
+    res.send(rep);
+    console.log(req.params);
+    //console.log(rep);
+})
+  
 app.patch('/chestupdate/:chestId',async(req,res) => {
   const Character = req.body.character_name;
 
@@ -102,25 +166,6 @@ app.patch('/chestupdate/:chestId',async(req,res) => {
   }
 )
 
-app.post('/character' ,async(req,res) => {
-  let existing = await client.db("Assignment").collection("characters").findOne({
-    name: req.body.character_name
-});
-  if (existing) {
-    res.status(400).send("Character already exist")
-  } else {
-    let character = await client.db("Assignment").collection("characters").insertOne({
-      name: req.body.character_name,
-      health: req.body.health,
-      attack: req.body.attack,
-      defense: req.body.defense,
-      type: req.body.type
-    });
-    res.send(character);
-    }
-  }
-)
-
 app.patch('/characterupdate/:charactername',async(req,res) => {
   let existing = await client.db("Assignment").collection("characters").findOne({
     name: req.params.charactername
@@ -135,7 +180,8 @@ app.patch('/characterupdate/:charactername',async(req,res) => {
         health: req.body.health,
         attack: req.body.attack,
         defense: req.body.defense,
-        type: req.body.type
+        type: req.body.type,
+        character_power: req.body.character_power
       }
     });
     res.send(character);
@@ -212,64 +258,33 @@ app.patch('/addfriend/:username',async(req,res) => {
  
 })
 
-app.post('/login',async(req,res) => { 
-      let resp = (await client.db("Assignment").collection("users").findOne({
-        name: req.body.username
-})    
-    )||(
-        await client.db("Assignment").collection("users").findOne({
-        email: req.body.email
-        }));
-
-  console.log(resp);
-  console.log(req.body);
-
-      if(!resp){
-        res.send('User not found');
-      }else{
-       // Check if password is provided
-    if (req.body.password) {
-      if (bcrypt.compareSync(req.body.password, resp.password)) {
-        res.send('Login successful');
-      } else {
-        res.send('Wrong Password');
-      }
-    } else {
-      // Handle case where password is not provided
-      // This is where you might decide to return an error or a specific message
-      res.send('Password field is missing');
-    }
-      }
-      
-})
-
-//get read user profile
-app.get('/read/:id',async(req,res) => {
-  
-let rep = await client.db("Assignment").collection("users").findOne({
-  //username: req.params.username
-  _id: new ObjectId(req.params.id)
-
-});
-  
-  res.send(rep);
-  console.log(req.params);
-  //console.log(rep);
- })
-
 //update user profile
 app.patch('/update/:id',async(req,res) => {
 
       let require = await client.db("Assignment").collection("users").updateOne({
         _id: new ObjectId(req.params.id)
       },{
-        $unset:{
-          friends: req.body.friends
+        $set:{
+          name: req.body.username,
+          email: req.body.email,
+          gender: req.body.gender
         }
       });
 
       res.send(require);
     console.log(req.body);
+})
+
+app.patch('/buying_chest',async(req,res) => {
+
+})
+
+app.patch('/money_generator',async(req,res) => {
+
+
+})
+app.patch('/battle/:id_1/:id_2',async(req,res) => {
+
 })
 
 //delete user profile
@@ -301,58 +316,8 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-
-    // Send a ping to confirm a successful connection
-    //await client.db("admin").command({ ping: 1 });
-
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    
-    //insert one document with the said information
-    /*let result = await client.db("testing").collection("file_1").insertOne({
-        name: "Samuel",
-        age: 20,
-        gender:"male",
-        faculty: "FTKEK"
-      });
-    */
 
-   //to find the document with the said information
-   /*
-    let result = await client.db("testing").collection("file_1").find({name:'Samuel'},
-    {
-      //projection is used to select the fields to be displayed
-      projection:{age:0,gender:0}
-      }
-        ).toArray();
-   */ 
-   
-   //update a document with the said information
-   /*
-    let result = await client.db("testing").collection("file_1").updateOne(
-      {_id:new ObjectId('660518d9aa2fa53121de3f66')},
-      {
-        $set:{
-          faculty:'FTKEK',
-          gender:'female'
-        },
-        //push must be used for array only
-        $push:{
-          faculty:'FKEKK',
-          gender: 'male'
-        }
-        
-      }
-    );
-    */
-   //delete a document with the said information
-   /*
-    let result = await client.db("testing").collection("file_1").deleteOne(
-      {
-        _id:new ObjectId('65efc07a441e4b25a99534c0')
-      }
-    );
-   */ 
-   //console.log(result);
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
