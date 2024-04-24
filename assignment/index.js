@@ -25,10 +25,7 @@ app.post('/register',async(req,res) => {
           name: req.body.username,
           password: hash,
           email: req.body.email,
-          gender: req.body.gender,
-          collection: req.body.collection,
-          money: req.body.money,
-          friends: req.body.friends
+          gender: req.body.gender
       });
       res.send(resq);
     }
@@ -42,7 +39,8 @@ app.post('/chest' ,async(req,res) => {
     res.status(400).send("Chest already exist")
   } else {
     let chest = await client.db("Assignment").collection("chests").insertOne({
-      chest: req.body.chest_name
+      chest: req.body.chest_name,
+      price: req.body.price
     });
     res.send(chest);
     }
@@ -113,6 +111,7 @@ app.get('/read/:id',async(req,res) => {
     console.log(req.params);
     //console.log(rep);
 })
+
 app.patch('/chest_update/:chestname',async(req,res) => {
   let existing_chest = await client.db("Assignment").collection("chests").findOne({
     chest: req.params.chestname
@@ -138,11 +137,11 @@ app.patch('/chest_update/:chestname',async(req,res) => {
 app.patch('/add_character_to_chest/:chestId',async(req,res) => {
   const Character = req.body.character_name;
 
-  const existingCharacter = await client.db("Assignment").collection("chests").findOne({
+  const existingChest = await client.db("Assignment").collection("chests").findOne({
     _id: new ObjectId(req.params.chestId)
   });
 
-  const existingChest = await client.db("Assignment").collection("characters").findOne({
+  const existingCharacter = await client.db("Assignment").collection("characters").findOne({
     name: Character
   });
 
@@ -159,9 +158,11 @@ app.patch('/add_character_to_chest/:chestId',async(req,res) => {
             });
             character_power_level += individual_character_power.character_power;
           }
-
-          //let newTotalPowerLevel = existingChest.total_power_level ? existingChest.total_power_level + character_power_level : character_power_level;
           
+          if(existingChest.total_power_level){
+            character_power_level = character_power_level + existingChest.total_power_level;
+          };
+
           let chest = await client.db("Assignment").collection("chests").updateOne({
             _id: new ObjectId(req.params.chestId)
           },{
@@ -180,9 +181,18 @@ app.patch('/add_character_to_chest/:chestId',async(req,res) => {
         if (!existingChest && !existingCharacter) {
           res.status(400).send("Chest or Character does not exist")
         } else {
+          let character_power_level = 0;
+            let individual_character_power = await client.db("Assignment").collection("characters").findOne({
+              name: req.body.character_name
+            });
+            character_power_level += individual_character_power.character_power;
+        
           let chest = await client.db("Assignment").collection("chests").updateOne({
             _id: new ObjectId(req.params.chestId)
           },{
+            $set:{
+              total_power_level: character_power_level
+            },
             $addToSet:{
               //chest: req.body.chest_name,
               characters:req.body.character_name
@@ -289,7 +299,7 @@ app.patch('/addfriend/:username',async(req,res) => {
 
 //update user profile
 app.patch('/update/:id',async(req,res) => {
-
+      //might need to update the part if they want to change the password , must hash the new password
       let require = await client.db("Assignment").collection("users").updateOne({
         _id: new ObjectId(req.params.id)
       },{
