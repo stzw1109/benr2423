@@ -27,7 +27,8 @@ app.post('/register',async(req,res) => {
           email: req.body.email,
           gender: req.body.gender,
           collection: req.body.collection,
-          money: req.body.money
+          money: req.body.money,
+          friends: req.body.friends
       });
       res.send(resq);
     }
@@ -60,7 +61,8 @@ app.post('/character' ,async(req,res) => {
       health: req.body.health,
       attack: req.body.attack,
       defense: req.body.defense,
-      type: req.body.type
+      type: req.body.type,
+      character_power: req.body.character_power
     });
     res.send(character);
     }
@@ -111,56 +113,83 @@ app.get('/read/:id',async(req,res) => {
     console.log(req.params);
     //console.log(rep);
 })
-  
-app.patch('/chestupdate/:chestId',async(req,res) => {
+app.patch('/chest_update/:chestname',async(req,res) => {
+  let existing_chest = await client.db("Assignment").collection("chests").findOne({
+    chest: req.params.chestname
+  });
+
+  if(existing_chest){
+    let new_chest = await client.db("Assignment").collection("chests").updateOne({
+      chest: req.params.chestname
+    },{
+      $set:{
+        chest: req.body.chest_name,
+        price: req.body.price
+      }
+    });
+    console.log(existing_chest);
+    console.log(new_chest);
+    res.send('Chest updated successfully');
+  }else{
+    res.send('Chest not found');
+  }
+})
+
+app.patch('/add_character_to_chest/:chestId',async(req,res) => {
   const Character = req.body.character_name;
+
+  const existingCharacter = await client.db("Assignment").collection("chests").findOne({
+    _id: new ObjectId(req.params.chestId)
+  });
+
+  const existingChest = await client.db("Assignment").collection("characters").findOne({
+    name: Character
+  });
 
   if(Array.isArray(Character)){
 
-    let existing = await client.db("Assignment").collection("chests").findOne({
-      _id: new ObjectId(req.params.chestId)
-    });
-    let existing2 = await client.db("Assignment").collection("characters").findOne({
-      name: Character
-    });
-
-    if (!existing && !existing2) {
-      res.status(400).send("Chest does not exist")
+    if (!existingCharacter && !existingChest) {
+         res.status(400).send("Chest or character does not exist")
     } else {
-      let chest = await client.db("Assignment").collection("chests").updateOne({
-        _id: new ObjectId(req.params.chestId)
-      },{
-        $addToSet:{
-          //chest: req.body.chest_name,
-          characters:{
-            $each:Character
+          let character_power_level = 0;
+
+          for (const character of Character) {
+            let individual_character_power = await client.db("Assignment").collection("characters").findOne({
+              name: character
+            });
+            character_power_level += individual_character_power.character_power;
           }
-        }
-      });
-      res.send({message: 'Characters added to chest'});
-      }
+
+          //let newTotalPowerLevel = existingChest.total_power_level ? existingChest.total_power_level + character_power_level : character_power_level;
+          
+          let chest = await client.db("Assignment").collection("chests").updateOne({
+            _id: new ObjectId(req.params.chestId)
+          },{
+            $set:{
+              total_power_level: character_power_level
+            },
+            $addToSet:{
+              characters:{
+                $each:Character
+              }
+            }
+          });
+          res.send({message: 'Characters added to chest'});
+          }
   }else{
-
-    let existing = await client.db("Assignment").collection("chests").findOne({
-      _id: new ObjectId(req.params.chestId)
-    });
-    let existing2 = await client.db("Assignment").collection("characters").findOne({
-      name: Character
-    });
-
-    if (!existing && !existing2) {
-      res.status(400).send("Chest does not exist")
-    } else {
-      let chest = await client.db("Assignment").collection("chests").updateOne({
-        _id: new ObjectId(req.params.chestId)
-      },{
-        $addToSet:{
-          //chest: req.body.chest_name,
-          characters:req.body.character_name
-        }
-      });
-      res.send({message: 'Character added to chest'});
-      }
+        if (!existingChest && !existingCharacter) {
+          res.status(400).send("Chest or Character does not exist")
+        } else {
+          let chest = await client.db("Assignment").collection("chests").updateOne({
+            _id: new ObjectId(req.params.chestId)
+          },{
+            $addToSet:{
+              //chest: req.body.chest_name,
+              characters:req.body.character_name
+            }
+          });
+          res.send({message: 'Character added to chest'});
+          }
   }
   
   }
@@ -275,16 +304,67 @@ app.patch('/update/:id',async(req,res) => {
     console.log(req.body);
 })
 
-app.patch('/buying_chest',async(req,res) => {
+app.patch('/buying_chest/:username',async(req,res) => {
+  let user_existing = (await client.db("Assignment").collection("users").findOne({
+    name: req.params.username
+  
+}))||(await client.db("Assignment").collection("users").findOne({
+  email: req.params.username
+}));
+
+  let chest_existing = await client.db("Assignment").collection("chests").findOne({
+    chest: req.body.collection  
+  })
+  console.log(user_existing,chest_existing);
+
+  if (user_existing && chest_existing){
+    let buying = await client.db("Assignment").collection("users").updateOne({$or:[{
+      //filter by username or email
+      name: req.params.username
+    },{
+      email: req.params.username
+    }]},{
+      //operation
+      $set:{
+        collection: req.body.collection
+      }
+      
+    });
+    console.log(buying);
+    console.log(req.body);
+  }else{
+    res.status(400).send('User or chest not found');
+  }
+  
+})
+
+app.patch('/money_generator/:username',async(req,res) => {
+  const min = 1000;
+  const max = 2000;
+  const newMoneyAmount = Math.floor(Math.random() * (max - min + 1)) + min;
+
+  let user_existing = await client.db("Assignment").collection("users").findOne({
+    name:req.params.username
+  });
+
+  if(user_existing){ 
+    let money = await client.db("Assignment").collection("users").updateOne({
+      name: req.params.username
+    },{
+      $set:{
+        money: newMoneyAmount
+      }
+    });
+    res.send(`Amount: RM ${newMoneyAmount} is given to ${req.params.username}`);
+    console.log(money);
+  }else{
+    res.status(400).send('User not found');
+  }
 
 })
 
-app.patch('/money_generator',async(req,res) => {
-
-
-})
 app.patch('/battle/:id_1/:id_2',async(req,res) => {
-
+    
 })
 
 //delete user profile
@@ -299,7 +379,6 @@ app.delete('/delete/:id',async(req,res) => {
 app.listen(port, () => {
    console.log(`Example app listening on port ${port}`)
 })
-
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = "mongodb+srv://samuel:yeehai@benr2423.jgm92s9.mongodb.net/?retryWrites=true&w=majority&appName=BENR2423";
