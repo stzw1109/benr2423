@@ -1,0 +1,19 @@
+//Retrieve all the books from the "books" collection. 
+db.books.find();
+
+//Retrieve the book(s) written by "George Orwell". 
+db.books.find({
+    author:"George Orwell"
+});
+
+//Retrieve the book(s) published after the year 1950. 
+db.books.find({
+    year:{
+        $gt:1950
+    }
+});
+
+//Retrieve the book(s) whose genre is "Fiction". 
+db.books.find({
+    genre:"Fiction"
+});

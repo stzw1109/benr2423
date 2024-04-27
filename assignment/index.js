@@ -336,10 +336,12 @@ app.patch('/buying_chest/:username',async(req,res) => {
     }]},{
       //operation
       $set:{
-        collection: req.body.collection
+        collection: req.body.collection,
+        PlayerPowerLevel: chest_existing.total_power_level
       }
       
     });
+    res.send('Chest bought successfully');
     console.log(buying);
     console.log(req.body);
   }else{
@@ -373,8 +375,54 @@ app.patch('/money_generator/:username',async(req,res) => {
 
 })
 
-app.patch('/battle/:id_1/:id_2',async(req,res) => {
-    
+app.patch('/battle/:name1/:name2',async(req,res) => {
+    let user1 = await client.db("Assignment").collection("users").findOne({
+      name:req.params.name1
+    });
+    let user2 = await client.db("Assignment").collection("users").findOne({
+      name:req.params.name2
+    });
+
+    if(user1 && user2){
+      if(user1.PlayerPowerLevel > user2.PlayerPowerLevel){
+        res.send(`${req.params.name1} has won the battle!!`);
+
+        user1 = await client.db("Assignment").collection("users").updateOne({
+          name: req.params.name1
+        },{
+          $inc:{
+            money: 1000
+          }
+        });
+        user1 = await client.db("Assignment").collection("users").updateOne({
+          name: req.params.name2
+        },{
+          $inc:{
+            money: 200
+          }
+        });
+
+      }else{
+        res.send(`${req.params.name2} has won the battle!!`);
+
+        user1 = await client.db("Assignment").collection("users").updateOne({
+          name: req.params.name1
+        },{
+          $inc:{
+            money: 200
+          }
+        });
+        user1 = await client.db("Assignment").collection("users").updateOne({
+          name: req.params.name2
+        },{
+          $inc:{
+            money: 1000
+          }
+        });
+      }
+    }else{
+      res.status(400).send(`User:${req.params.name1} and User: ${req.params.name2} not found`);
+    }
 })
 
 //delete user profile

@@ -1,0 +1,22 @@
+//Retrieve all the employees from the "employees" collection
+db.employees.find();
+
+//Retrieve all the employee(s) who belong to the "IT" department
+db.employees.find({
+    department: "IT"
+});
+
+////Retrieve all the employees who are older than 30
+db.employees.find({
+    age:{
+        $gt:30
+    }
+});
+
+// /Retrieve the employee(s) whose salary is greater than or equal to 6000
+db.employees.find({
+    salary:{
+        $gte:6000
+    }
+});
+

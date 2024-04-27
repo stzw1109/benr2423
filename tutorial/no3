@@ -1,0 +1,38 @@
+//Retrieve all the products that are in the "Laptops" category 
+db.products.find({
+    category: "Laptops"
+});
+//Retrieve all the products that are either in the "Laptops" category and have a price 
+//greater than $1000
+db.products.find({
+    $or:[{
+        category:"Laptops"
+    },{
+        price:{
+            $gt:1000
+        }
+    }]
+});
+//Retrieve all the products that are either in stock or have a price less than $1000.
+db.products.find({
+    $or:[{
+        in_stock:true
+    },{
+        price:{
+            $lt:1000
+        }
+    }]
+});
+//Retrieve all the products that are not in the "Smartphones" category and have a 
+//brand other than "Samsung".
+db.products.find({
+    $and:[{
+        category:{
+            $ne:"Smartphones"
+        }
+    },{
+        brand:{
+            $ne:"Samsung"
+        }
+    }]
+});
