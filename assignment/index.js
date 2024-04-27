@@ -112,6 +112,14 @@ app.get('/read/:id',async(req,res) => {
     //console.log(rep);
 })
 
+app.get('/leaderboard',async(req,res)=>{
+  let leaderboard = await client.db("Assignment").collection("users").find().sort({
+    PlayerPowerLevel: -1
+  }).toArray();
+
+  res.send(leaderboard);
+})
+
 app.patch('/chest_update/:chestname',async(req,res) => {
   let existing_chest = await client.db("Assignment").collection("chests").findOne({
     chest: req.params.chestname
@@ -297,6 +305,73 @@ app.patch('/addfriend/:username',async(req,res) => {
  
 })
 
+app.patch('/removefriend/:username',async(req,res) => {
+    // Assuming req.body.friends is an array of friend names
+    const friends_removed = req.body.friend_to_be_removed;
+
+    // Check if friends array is provided and not empty
+    if (!Array.isArray(friends_removed) || friends_removed.length === 0) {
+        //if array of friends not provded
+        let existing = await client.db("Assignment").collection("users").findOne({
+          name: req.body.friend_to_be_removed
+        });
+  
+        if (existing) {
+          
+          let removing_friend = await client.db("Assignment").collection("users").updateOne({
+            name: req.params.username
+          },{
+            $pull: {
+              friends:  req.body.friend_to_be_removed
+            }
+          });
+  
+          let removing_friend2 = await client.db("Assignment").collection("users").updateOne({
+            name:req.body.friend_to_be_removed
+          },{
+            $pull: {
+              friends: req.params.username
+            }
+          });
+          
+          res.send("friend removed successfully");
+          console.log(removing_friend,removing_friend2);
+          
+        } else {
+          res.status(400).send("User does not exist")
+        }
+        
+    }else{
+       //array of friends is present
+        for (const friends of friends_removed) {
+          let existing = await client.db("Assignment").collection("users").findOne({
+            name: friends
+          });
+  
+          if (!existing) {
+            return res.status(400).send(`User ${friends_removed} does not exist`);
+          }
+  
+          let removing_friend = await client.db("Assignment").collection("users").updateOne({
+            name: req.params.username
+          }, {
+            $pull: {
+              friends: friends
+            }
+        });
+          let removing_friend2 = await client.db("Assignment").collection("users").updateOne({
+              name:friends
+            },{
+              $pull: {
+                friends: req.params.username
+              }
+          });
+      }
+      
+      // Send a response after all friends have been added
+      res.send({ message: 'Friends removed successfully' });
+    }
+})
 //update user profile
 app.patch('/update/:id',async(req,res) => {
       //might need to update the part if they want to change the password , must hash the new password
@@ -327,26 +402,35 @@ app.patch('/buying_chest/:username',async(req,res) => {
   })
   console.log(user_existing,chest_existing);
 
-  if (user_existing && chest_existing){
-    let buying = await client.db("Assignment").collection("users").updateOne({$or:[{
-      //filter by username or email
-      name: req.params.username
-    },{
-      email: req.params.username
-    }]},{
-      //operation
-      $set:{
-        collection: req.body.collection,
-        PlayerPowerLevel: chest_existing.total_power_level
-      }
-      
-    });
-    res.send('Chest bought successfully');
-    console.log(buying);
-    console.log(req.body);
+  if(user_existing.money<chest_existing.price){
+    res.send('Not enough money to buy chest. Please compete more battles to earn more money');
   }else{
-    res.status(400).send('User or chest not found');
+    if (user_existing && chest_existing){
+      let buying = await client.db("Assignment").collection("users").updateOne({$or:[{
+        //filter by username or email
+        name: req.params.username
+      },{
+        email: req.params.username
+      }]
+    },{
+        //operation
+        $addToSet:{
+          collection: req.body.collection
+        },
+        $inc:{
+          PlayerPowerLevel: chest_existing.total_power_level,
+          money: -chest_existing.price
+        }
+        
+      });
+      res.send('Chest bought successfully');
+      console.log(buying);
+      console.log(req.body);
+    }else{
+      res.status(400).send('User or chest not found');
+    }
   }
+      
   
 })
 
