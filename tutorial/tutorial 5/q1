@@ -1,0 +1,72 @@
+db.employees.updateOne({
+    name:"John Doe"
+},{
+    $set:{
+        department:"Customer Support"
+    }
+    
+})
+
+db.employees.updateOne({
+    name:"Alice Johnson"
+},{
+    $inc:{
+        projects:1
+    }
+})
+
+db.employees.find({
+    $or:[{department:"Sales"},{projects:{$gt:4}}]
+
+})
+
+db.employees.find({
+    //1st option
+    skills: {
+        $in:["communication","negotiation"]
+    }
+
+    //2nd option
+    $or:[{
+        skills: "negotiation"
+    },{ 
+        skills: "communication"
+    }]
+})
+
+db.employees.find({
+    $and:[{age:{$lt:30}},{department:"Development"}]
+})
+
+db.employees.updateOne({
+
+    name:"Jane Smith"
+},{
+    $push:{
+        skills:"management"
+    }
+})
+
+db.employees.find({
+    $or:[{name:"John Doe"},{skills:{$in:["seo"]}}]
+})
+
+db.employees.updateMany({
+    active:false
+},{
+    $inc:{
+        projects:-1
+    }
+})
+
+db.employees.find({
+    $and:[{active:true},{skills:{$in:["programming"]}}]
+})
+
+db.employees.updateMany({
+    department:"Marketing"
+},{
+    $inc:{
+        age:2
+    }
+})

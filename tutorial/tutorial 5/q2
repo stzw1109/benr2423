@@ -1,0 +1,58 @@
+db.products.updateOne({
+    name:"Laptop"
+},{
+    $set:{
+        price:1100
+    }
+    
+})
+
+db.products.updateOne({
+    name:"Office Chair"
+},{
+    $inc:{
+        stock:5
+    }
+})
+
+db.products.find({
+    $or:[{
+        category:"electronics"
+    },{
+        price:{$lt:200}
+    }]
+})
+
+db.products.find({
+    $and:[{categories:{$eq:"electronics"}},{categories:{$eq:"computers"}}]
+})
+
+db.products.find({
+    $and:[{available: true},{stock:{$gt:50}}]
+})
+
+db.products.updateOne({
+    name:"Laptop"
+},{
+    $push:{
+        categories:"gaming"
+    }
+})
+
+db.products.find({
+    $or:[{name:"Headphones"},{categories:{$eq:"furniture"}}]
+})
+
+db.products.updateMany({},{
+    $inc:{
+        stock:-2
+    }
+})
+
+db.products.find({
+    $and:[{available:false},{price:{$gt:200}}]
+})
+
+db.products.find({
+    $or:[{categories:{$ne:"audio"}},{stock:{$lt:20}}]
+})

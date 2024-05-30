@@ -1,0 +1,19 @@
+//a) i)
+app.get('/read',async(req,res)=>{
+    const result = await client.db('hotel').collection('visitors').find().toArray()
+    console.log(result);
+    res.send(result);
+})
+
+//ii)
+app.post('/register',async(req,res)=>{
+    const result = await client.db('hotel').collection('visitors').insertOne({
+        name:"samuel",
+        age: 22,
+        gender: "male",
+        number: "01123454566",
+        email:"st@yeehai.com"
+    });
+    console.log(result);
+    res.send(result);
+})

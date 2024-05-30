@@ -1,0 +1,34 @@
+[{
+  "_id": 1,
+  "name": "Laptop",
+  "price": 1100,
+  "categories": [
+    "electronics",
+    "computers",
+    "gaming"
+  ],
+  "stock": 28,
+  "available": true
+},
+{
+  "_id": 2,
+  "name": "Headphones",
+  "price": 150,
+  "categories": [
+    "electronics",
+    "audio"
+  ],
+  "stock": 98,
+  "available": true
+},
+{
+  "_id": 3,
+  "name": "Office Chair",
+  "price": 250,
+  "categories": [
+    "furniture",
+    "office"
+  ],
+  "stock": 13,
+  "available": false
+}]
