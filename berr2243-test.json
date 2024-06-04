@@ -1,0 +1,57 @@
+[{
+  "_id": 1,
+  "name": "Laptop",
+  "specs": [
+    {
+      "type": "processor",
+      "model": "i7"
+    },
+    {
+      "type": "RAM",
+      "size": "8GB"
+    },
+    {
+      "type": "storage",
+      "size": "512GB",
+      "info": "SSD"
+    }
+  ]
+},
+{
+  "_id": 2,
+  "name": "Smartphone",
+  "specs": [
+    {
+      "type": "processor",
+      "model": "Snapdragon"
+    },
+    {
+      "type": "RAM",
+      "size": "6GB"
+    },
+    {
+      "type": "storage",
+      "size": "128GB",
+      "info": "UFS 3.1"
+    }
+  ]
+},
+{
+  "_id": 3,
+  "name": "Tablet",
+  "specs": [
+    {
+      "type": "processor",
+      "model": "A12 Bionic"
+    },
+    {
+      "type": "RAM",
+      "size": "4GB"
+    },
+    {
+      "type": "storage",
+      "size": "256GB",
+      "info": "SSD"
+    }
+  ]
+}]

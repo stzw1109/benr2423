@@ -60,13 +60,15 @@ app.post('/login',async(req,res) => {
       
 });
 
-app.post('/buy',async(req,res)=>{
+app.post('/buy',verifyToken,async(req,res)=>{
   const token = req.headers.authorization.split(" ")[1];
   console.log(`Token: ${token} `);
 
-  var decoded = jwt.verify(token, 'digga');
-  console.log(decoded);
-  res.send(decoded);
+  // var decoded = jwt.verify(token, 'digga');
+  console.log(req.identify);
+  res.send(req.identify);
+  
+
 })
 
 //get read user profile
@@ -104,12 +106,16 @@ app.patch('/update/:id',async(req,res) => {
 })
 
 //delete user profile
-app.delete('/delete/:id',async(req,res) => {
-  let delete_req = await client.db("testing").collection("file_1").deleteOne({
+app.delete('/delete/:id',verifyToken,async(req,res) => {
+  if(req.identify._id != req.params.id){
+    res.status(400).send('Unauthorized access');
+  }else{
+    let delete_req = await client.db("Restful_API").collection("user").deleteOne({
     _id: new ObjectId(req.params.id)
   });
-  res.send(delete_req);
-  console.log(req.params);  
+    res.send(delete_req);
+    console.log(req.params);  
+  }
 })
 
 
@@ -132,6 +138,23 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+function verifyToken(req, res, next) {
+  const authHeader = req.headers.authorization
+  const token = authHeader && authHeader.split(' ')[1]
+
+  if (token == null) return res.sendStatus(401)
+
+  jwt.verify(token, "digga", (err, decoded) => {
+    console.log(err)
+
+    if (err) return res.sendStatus(403)
+
+    req.identify = decoded
+
+    next()
+  })
+}
 
 async function run() {
   try {

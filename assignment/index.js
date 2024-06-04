@@ -1,3 +1,4 @@
+require("dotenv").config();
 const bcrypt = require("bcrypt");
 const express = require("express");
 const app = express();
@@ -958,6 +959,22 @@ app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
 
+function verifyToken(req, res, next) {
+  const authHeader = req.headers.authorization
+  const token = authHeader && authHeader.split(' ')[1]
+
+  if (token == null) return res.sendStatus(401)
+
+  jwt.verify(token, "passwordorangsusahnakhack", (err, decoded) => {
+    console.log(err)
+
+    if (err) return res.sendStatus(403)
+
+    req.identify = decoded
+
+    next()
+  })
+}
 //Path:package.json
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri =
