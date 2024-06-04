@@ -1,0 +1,49 @@
+[{
+  "_id": {
+    "$oid": "6625b7be19a120d17f92294f"
+  },
+  "chest":"Common",
+  "price":{"$numberInt":"550"},
+  "characters":["Darius","Jax","Lee Sin","Lillia","Ornn","Rammus","Sion","Yone"],
+  "Max_power_level":{"$numberInt":"4000"}
+},
+{
+  "_id": {
+    "$oid": "6625b89f19a120d17f922951"
+  },
+
+  "chest":"Rare",
+  "price":{"$numberInt":"1000"},
+  "characters":["Jax","Sion","Lillia","Yuumi","Yasuo","Yone","Raven","Rammus","Darius","Lee Sin"],
+  "Max_power_level":{"$numberInt":"7500"}
+},
+{
+  "_id": {
+    "$oid": "6625b90519a120d17f922952"
+  },
+  "chest":"Epic",
+  "price":{"$numberInt":"1200"},
+  "characters":["Ornn","Kays","Zed","Warwick","Darius","Jax","Volibear","Yasuo","Raven","Yuumi"],
+  "Max_power_level":{"$numberInt":"6224"}
+},
+{
+  "_id": {
+    "$oid": "6625b94519a120d17f922953"
+  },
+  "chest":"Legendary",
+  "price":{"$numberInt":"1500"},
+  "characters":["Kays","Nasus ","Volibear","Warwick","Quaso","Chicko","Zed"],
+  "Max_power_level":{"$numberInt":"7581"}
+},
+{
+  "_id": {
+    "$oid": "6625c94019a120d17f922954"
+  },
+  "chest":"Champion",
+  "price":{"$numberInt":"2000"},
+  "characters":["Neko","Panda","Gojo","Quaso","Chicko","Warwick","Kays"],
+  "Max_power_level":{"$numberInt":"14850"}
+}
+]
+
+
