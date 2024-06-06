@@ -1,0 +1,71 @@
+//Q1 b)
+
+//i) 
+db.books.find({
+    courses:{
+        $elemMatch:{
+            course_name:"Physics"
+    }
+}
+})
+
+//ii)
+ db.books.find({{
+    courses:{
+        $elemMatch:{
+            grade:"A"
+    }
+}
+}).count()
+
+//iii) 
+db.books.find({name:"Charlie"},{courses:1})
+
+//iv) 
+db.books.updateOne({
+    $and:[{name:"Bob"},{courses:{$elemMatch:{course_name:"Mathematic"}}}]
+},{
+    $set:{
+        "courses.$.grade":"B"
+    }
+})
+
+//v)
+ db.books.updateOne({
+    name:"Alice"
+},{
+    $pull:{
+        courses:{
+            course_name:"Chemistry"
+        }
+    }
+})
+
+
+//
+//a)
+db.exam.find()
+
+//b)
+db.exam.find({},{_id:1,name:1,address:1})
+
+//c)
+db.exam.find({
+    "address.state":"Melaka"
+})
+
+//d)
+db.exam.find({"reviews.score":{$gt:8}})
+
+//e)
+db.exam.updateOne({
+    _id: 30075446
+},{
+    $push:{
+        reviews:
+            {date:{$date:2990312310320},grade:"A",score:9}
+    }
+})
+
+//f)
+db.exam.deleteOne({_id:30075445})

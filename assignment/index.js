@@ -130,10 +130,7 @@ app.post("/login", async (req, res) => {
 
 //login to get startpack 
 app.patch("/login/starterpack",verifyToken, async (req, res) => {
-  if (req.identify.roles != "player" && req.identify.name != req.body.name) {
-    return res.status(401).send("You are not authorised to take the starter pack");
-  }else{
-
+  if (req.identify.roles == "player" && req.identify.name == req.body.name) {
     if (!req.body.name) {
       return res.status(400).send("name is required.☜(`o´)");
     }
@@ -162,14 +159,14 @@ app.patch("/login/starterpack",verifyToken, async (req, res) => {
         `Total amount of RM ${newMoneyAmount} is given to player ${req.body.name}🤑🤑🤑 `
       );
     }
+  }else{
+    return res.status(401).send("You are not authorised to take the starter pack");
   }
 });
 
 //in funtion of adding chest(developer token needed)
 app.post("/chests",verifyToken,async (req, res) => {
-  if (req.identify.roles != "admin") {
-    return res.status(401).send("You are not authorised to create a chest");
-  }else{
+  if (req.identify.roles == "admin") {
     if (
       !req.body.chest ||
       !req.body.price ||
@@ -199,6 +196,8 @@ app.post("/chests",verifyToken,async (req, res) => {
       });
       res.send(chest);
     }
+  }else{
+    return res.status(401).send("You are not authorised to create a chest");
   }
 });
 //in function of adding character(developer token needed)
@@ -244,9 +243,7 @@ app.post("/character",verifyToken, async (req, res) => {
 
 //everyone can read each other(users and developers)
 app.get("/read/:player_id", verifyToken,async (req, res) => {
-  if((req.identify.roles != "player" && req.identify.player_id != req.params.player_id)||req.identify.roles != "admin"){
-    return res.status(401).send("You are not authorised to read this player");
-  }else{
+  if((req.identify.roles == "player" && req.identify.player_id == req.params.player_id)||req.identify.roles == "admin"){
     let document = await client
     .db("Assignment")
     .collection("players")
@@ -313,285 +310,284 @@ app.get("/read/:player_id", verifyToken,async (req, res) => {
     ])
     .toArray();
   res.send(document);
+  }else{
+    return res.status(401).send("You are not authorised to read this player");
   }
 });
 
 //need Developer token
 app.patch("/add_character_to_chest",verifyToken,async (req, res) => {
-    if(req.identify.roles != "admin"){
-    return res.status(401).send("You are not authorised to add character to chest");
+  if(req.identify.roles == "admin"){
+      if (!req.body.chest || !req.body.character_name) {
+        return res
+          .status(400)
+          .send("chest and character_name are required. \n٩(๑ `н´๑)۶");
+      }
+      let result2 = await client
+        .db("Assignment")
+        .collection("chests")
+        .findOne({ chest: req.body.chest });
+      if (!result2) {
+        return res.status(404).send("Chest not found|･ω･｀)");
+      }
+      if (result2.characters.includes(req.body.character_name)) {
+        return res.status(400).send("Character already exist in the chest |･ω･)ﾉ");
+      }
+      const result = await client
+        .db("Assignment")
+        .collection("chests")
+        .updateOne(
+          { chest: req.body.chest },
+          { $addToSet: { characters: req.body.character_name } }
+        );
+      res.send("Character added successfully ૮ ºﻌºა");
   }else{
-    if (!req.body.chest || !req.body.character_name) {
-      return res
-        .status(400)
-        .send("chest and character_name are required. \n٩(๑ `н´๑)۶");
-    }
-    let result2 = await client
-      .db("Assignment")
-      .collection("chests")
-      .findOne({ chest: req.body.chest });
-    if (!result2) {
-      return res.status(404).send("Chest not found|･ω･｀)");
-    }
-    if (result2.characters.includes(req.body.character_name)) {
-      return res.status(400).send("Character already exist in the chest |･ω･)ﾉ");
-    }
-    const result = await client
-      .db("Assignment")
-      .collection("chests")
-      .updateOne(
-        { chest: req.body.chest },
-        { $addToSet: { characters: req.body.character_name } }
-      );
-    res.send("Character added successfully ૮ ºﻌºა");
+    return res.status(401).send("You are not authorised to add character to chest");
   }
 });
 
 //need Developer token
 app.patch("/characterupdate/:charactername",verifyToken,async (req, res) => {
-  if(req.identify.roles != "admin"){
-    res.status(403).send("You are not authorised to update this character");
-  }else{
+  if(req.identify.roles == "admin"){
     if (
-    !req.body.health ||
-    !req.body.attack ||
-    !req.body.speed ||
-    !req.body.type
-  ) {
-    return res
-      .status(400)
-      .send("health,attack,speed and type are required.（＞д＜）");
-  }
-  let existing = await client
-    .db("Assignment")
-    .collection("characters")
-    .findOne({
-      name: req.params.charactername,
-    });
-  if (!existing) {
-    res.status(400).send("Character does not exist (´つヮ⊂)");
-  } else {
-    let character = await client
+      !req.body.health ||
+      !req.body.attack ||
+      !req.body.speed ||
+      !req.body.type
+    ) {
+      return res
+        .status(400)
+        .send("health,attack,speed and type are required.（＞д＜）");
+    }
+    let existing = await client
       .db("Assignment")
       .collection("characters")
-      .updateOne(
-        {
-          name: req.params.charactername,
-        },
-        {
-          $set: {
-            health: req.body.health,
-            attack: req.body.attack,
-            speed: req.body.speed,
-            type: req.body.type,
+      .findOne({
+        name: req.params.charactername,
+      });
+    if (!existing) {
+      res.status(400).send("Character does not exist (´つヮ⊂)");
+    } else {
+      let character = await client
+        .db("Assignment")
+        .collection("characters")
+        .updateOne(
+          {
+            name: req.params.charactername,
           },
-        }
-      );
-    res.send(character);
+          {
+            $set: {
+              health: req.body.health,
+              attack: req.body.attack,
+              speed: req.body.speed,
+              type: req.body.type,
+            },
+          }
+        );
+      res.send(character);
+    }
+  }else{
+    res.status(403).send("You are not authorised to update this character");
   }
-  }
-  
 });
 
 // To send a friend request for users only
 app.post("/send_friend_request", verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" && req.identify.playerId != req.body.requesterId){
-    return res.status(401).send("You are not authorised to send this friend request");
+  if(req.identify.roles == "player" && req.identify.player_id == req.body.requesterId){
+    if (!req.body.requesterId || !req.body.requestedId) {
+      return res
+        .status(400)
+        .send("requesterId and requestedId are required. (◡́.◡̀)(^◡^ )");
+    }
+    // Check if requesterId and requestedId are different
+    if (parseInt(req.body.requesterId) === parseInt(req.body.requestedId)) {
+      return res
+        .status(400)
+        .send("You cannot send a friend request to yourself\n໒( ̿❍ ᴥ ̿❍)u");
+    }
+    // Check if both players exist
+    const requester = await client
+      .db("Assignment")
+      .collection("players")
+      .findOne({ player_id: parseInt(req.body.requesterId) });
+  
+    const requested = await client
+      .db("Assignment")
+      .collection("players")
+      .findOne({ player_id: parseInt(req.body.requestedId) });
+  
+    if (!requester || !requested) {
+      return res.status(404).send("Either players not found ૮ ⚆ﻌ⚆ა?");
+    }
+    if (requester.friends.friendList.includes(requested.player_id)) {
+      return res
+        .status(404)
+        .send("The player is already in your friend list ૮ ⚆ﻌ⚆ა?");
+    }
+    // Check if friend request has already been sent
+    if (
+      requester &&
+      requester.friends &&
+      requester.friends.sentRequests &&
+      requester.friends.sentRequests.indexOf(parseInt(req.body.requestedId)) !==
+        -1
+    ) {
+      return res.status(400).send("Friend request already sent");
+    }
+    // Send the friend request
+    const sent = await client
+      .db("Assignment")
+      .collection("players")
+      .updateOne(
+        { player_id: parseInt(req.body.requesterId) },
+        { $push: { "friends.sentRequests": parseInt(req.body.requestedId) } }
+      );
+    const sent2 = await client
+      .db("Assignment")
+      .collection("players")
+      .updateOne(
+        { player_id: parseInt(req.body.requestedId) },
+        {
+          $push: {
+            "friends.needAcceptRequests": parseInt(req.body.requesterId),
+          },
+        }
+      );
+    if (sent.modifiedCount === 0 && sent2.modifiedCount === 0) {
+      res.status(400).send("Failed to send friend request");
+    } else {
+      res.send("Friend request sent! \n(っ◔◡◔)っ ♥ ᶠᵉᵉᵈ ᵐᵉ /ᐠ-ⱉ-ᐟﾉ");
+    }
   }else{
-  if (!req.body.requesterId || !req.body.requestedId) {
-    return res
-      .status(400)
-      .send("requesterId and requestedId are required. (◡́.◡̀)(^◡^ )");
-  }
-  // Check if requesterId and requestedId are different
-  if (parseInt(req.body.requesterId) === parseInt(req.body.requestedId)) {
-    return res
-      .status(400)
-      .send("You cannot send a friend request to yourself\n໒( ̿❍ ᴥ ̿❍)u");
-  }
-  // Check if both players exist
-  const requester = await client
-    .db("Assignment")
-    .collection("players")
-    .findOne({ player_id: parseInt(req.body.requesterId) });
-
-  const requested = await client
-    .db("Assignment")
-    .collection("players")
-    .findOne({ player_id: parseInt(req.body.requestedId) });
-
-  if (!requester || !requested) {
-    return res.status(404).send("Either players not found ૮ ⚆ﻌ⚆ა?");
-  }
-  if (requester.friends.friendList.includes(requested.player_id)) {
-    return res
-      .status(404)
-      .send("The player is already in your friend list ૮ ⚆ﻌ⚆ა?");
-  }
-  // Check if friend request has already been sent
-  if (
-    requester &&
-    requester.friends &&
-    requester.friends.sentRequests &&
-    requester.friends.sentRequests.indexOf(parseInt(req.body.requestedId)) !==
-      -1
-  ) {
-    return res.status(400).send("Friend request already sent");
-  }
-  // Send the friend request
-  const sent = await client
-    .db("Assignment")
-    .collection("players")
-    .updateOne(
-      { player_id: parseInt(req.body.requesterId) },
-      { $push: { "friends.sentRequests": parseInt(req.body.requestedId) } }
-    );
-  const sent2 = await client
-    .db("Assignment")
-    .collection("players")
-    .updateOne(
-      { player_id: parseInt(req.body.requestedId) },
-      {
-        $push: {
-          "friends.needAcceptRequests": parseInt(req.body.requesterId),
-        },
-      }
-    );
-  if (sent.modifiedCount === 0 && sent2.modifiedCount === 0) {
-    res.status(400).send("Failed to send friend request");
-  } else {
-    res.send("Friend request sent! \n(っ◔◡◔)っ ♥ ᶠᵉᵉᵈ ᵐᵉ /ᐠ-ⱉ-ᐟﾉ");
-  }
+    return res.status(401).send("You are not authorised to send this friend request");
 }});
 
 // To  accept a friend request for users only
 app.patch("/accept_friend_request", verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" && req.identify.playerId != req.body.accepterId){
-    return res.status(401).send("You are not authorised to accept this friend request");
-  }else{
+  if(req.identify.roles == "player" && req.identify.player_id == req.body.accepterId){
+    
+    if (!req.body.accepterId || !req.body.requesterId) {
+      return res
+        .status(400)
+        .send("accepterId and requesterId are required ㅇㅅㅇ");
+    }
+    if (parseInt(req.body.accepterId) === parseInt(req.body.requesterId)) {
+      return res
+        .status(400)
+        .send("You cannot accept a friend request from yourself");
+    }
+    // Check if both players exist
+    const requester = await client
+      .db("Assignment")
+      .collection("players")
+      .findOne({ player_id: parseInt(req.body.requesterId) });
 
-  if (!req.body.accepterId || !req.body.requesterId) {
-    return res
-      .status(400)
-      .send("accepterId and requesterId are required ㅇㅅㅇ");
-  }
-  if (parseInt(req.body.accepterId) === parseInt(req.body.requesterId)) {
-    return res
-      .status(400)
-      .send("You cannot accept a friend request from yourself");
-  }
-  // Check if both players exist
-  const requester = await client
-    .db("Assignment")
-    .collection("players")
-    .findOne({ player_id: parseInt(req.body.requesterId) });
+    const accepter = await client
+      .db("Assignment")
+      .collection("players")
+      .findOne({ player_id: parseInt(req.body.accepterId) });
 
-  const accepter = await client
-    .db("Assignment")
-    .collection("players")
-    .findOne({ player_id: parseInt(req.body.accepterId) });
-
-  if (!requester || !accepter) {
-    return res.status(404).send("Either players not found (=ↀωↀ=)");
-  }
-  // Move the friend request from needAcceptRequests to friends
-  const accept = await client
-    .db("Assignment")
-    .collection("players")
-    .updateOne(
-      {
-        player_id: parseInt(req.body.accepterId),
-        "friends.needAcceptRequests": parseInt(req.body.requesterId),
-      },
-      {
-        $pull: {
+    if (!requester || !accepter) {
+      return res.status(404).send("Either players not found (=ↀωↀ=)");
+    }
+    // Move the friend request from needAcceptRequests to friends
+    const accept = await client
+      .db("Assignment")
+      .collection("players")
+      .updateOne(
+        {
+          player_id: parseInt(req.body.accepterId),
           "friends.needAcceptRequests": parseInt(req.body.requesterId),
         },
-        $push: { "friends.friendList": parseInt(req.body.requesterId) },
+        {
+          $pull: {
+            "friends.needAcceptRequests": parseInt(req.body.requesterId),
+          },
+          $push: { "friends.friendList": parseInt(req.body.requesterId) },
+        }
+      );
+    console.log(accept);
+    const accept2 = await client
+      .db("Assignment")
+      .collection("players")
+      .updateOne(
+        {
+          player_id: parseInt(req.body.requesterId),
+          "friends.sentRequests": parseInt(req.body.accepterId),
+        },
+        {
+          $pull: { "friends.sentRequests": parseInt(req.body.accepterId) },
+          $push: { "friends.friendList": parseInt(req.body.accepterId) },
+        }
+      );
+    console.log(accept2);
+    if (accept.modifiedCount === 0 && accept2.modifiedCount === 0) {
+      res.status(400).send("Failed to accept friend request (=ↀωↀ=)");
+    } else {
+      res.send("Friend request accepted (ﾐⓛᆽⓛﾐ)✧");
+      if (player.friends.friendList.length > 5) {
+        await client
+          .db("Assignment")
+          .collection("players")
+          .updateOne(
+            { player_id: parseInt(req.body.accepterId) },
+            { $addToSet: { achievements: "Makes more friends (=✪ᆽ✪=)" } }
+          );
       }
-    );
-  console.log(accept);
-  const accept2 = await client
-    .db("Assignment")
-    .collection("players")
-    .updateOne(
-      {
-        player_id: parseInt(req.body.requesterId),
-        "friends.sentRequests": parseInt(req.body.accepterId),
-      },
-      {
-        $pull: { "friends.sentRequests": parseInt(req.body.accepterId) },
-        $push: { "friends.friendList": parseInt(req.body.accepterId) },
-      }
-    );
-  console.log(accept2);
-  if (accept.modifiedCount === 0 && accept2.modifiedCount === 0) {
-    res.status(400).send("Failed to accept friend request (=ↀωↀ=)");
-  } else {
-    res.send("Friend request accepted (ﾐⓛᆽⓛﾐ)✧");
-    if (player.friends.friendList.length > 5) {
-      await client
-        .db("Assignment")
-        .collection("players")
-        .updateOne(
-          { player_id: parseInt(req.body.accepterId) },
-          { $addToSet: { achievements: "Makes more friends (=✪ᆽ✪=)" } }
-        );
     }
-  }
+  }else{
+    return res.status(401).send("You are not authorised to accept this friend request");
 }});
 
 //for users to remove friend
 app.patch("/remove_friend/:requesterId/:friendId", verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" && req.identify.playerId != req.params.requesterId){
-    return res.status(401).send("You are not authorised to remove this friend");
+  if(req.identify.roles == "player" && req.identify.player_id == req.params.requesterId){
+    // Check if requesterId and friendId are different
+    if (parseInt(req.params.requesterId) === parseInt(req.params.friendId)) {
+      return res.status(400).send("You cannot remove yourself (╯ ͠° ͟ʖ ͡°)╯┻━┻");
+    }
+    // Check if both players exist
+    const requester = await client
+      .db("Assignment")
+      .collection("players")
+      .findOne({ player_id: parseInt(req.params.requesterId) });
+
+    const friend = await client
+      .db("Assignment")
+      .collection("players")
+      .findOne({ player_id: parseInt(req.params.friendId) });
+
+    if (!requester || !friend) {
+      return res.status(404).send("Either players not found (˃̣̣̥⌓˂̣̣̥ )");
+    }
+    // Remove the friend from the friendList of the requester
+    const remove1 = await client
+      .db("Assignment")
+      .collection("players")
+      .updateOne(
+        { player_id: parseInt(req.params.requesterId) },
+        { $pull: { "friends.friendList": parseInt(req.params.friendId) } }
+      );
+    // Remove the requester from the friendList of the friend
+    const remove2 = await client
+      .db("Assignment")
+      .collection("players")
+      .updateOne(
+        { player_id: parseInt(req.params.friendId) },
+        { $pull: { "friends.friendList": parseInt(req.params.requesterId) } }
+      );
+    if (remove1.modifiedCount === 0 && remove2.modifiedCount === 0) {
+      res.status(400).send("Failed to remove friend ╥__╥");
+    } else {
+      res.send("Friend removed ‧º·(˚ ˃̣̣̥⌓˂̣̣̥ )‧º·");
+    }
   }else{
-  // Check if requesterId and friendId are different
-  if (parseInt(req.params.requesterId) === parseInt(req.params.friendId)) {
-    return res.status(400).send("You cannot remove yourself (╯ ͠° ͟ʖ ͡°)╯┻━┻");
-  }
-  // Check if both players exist
-  const requester = await client
-    .db("Assignment")
-    .collection("players")
-    .findOne({ player_id: parseInt(req.params.requesterId) });
-
-  const friend = await client
-    .db("Assignment")
-    .collection("players")
-    .findOne({ player_id: parseInt(req.params.friendId) });
-
-  if (!requester || !friend) {
-    return res.status(404).send("Either players not found (˃̣̣̥⌓˂̣̣̥ )");
-  }
-  // Remove the friend from the friendList of the requester
-  const remove1 = await client
-    .db("Assignment")
-    .collection("players")
-    .updateOne(
-      { player_id: parseInt(req.params.requesterId) },
-      { $pull: { "friends.friendList": parseInt(req.params.friendId) } }
-    );
-  // Remove the requester from the friendList of the friend
-  const remove2 = await client
-    .db("Assignment")
-    .collection("players")
-    .updateOne(
-      { player_id: parseInt(req.params.friendId) },
-      { $pull: { "friends.friendList": parseInt(req.params.requesterId) } }
-    );
-  if (remove1.modifiedCount === 0 && remove2.modifiedCount === 0) {
-    res.status(400).send("Failed to remove friend ╥__╥");
-  } else {
-    res.send("Friend removed ‧º·(˚ ˃̣̣̥⌓˂̣̣̥ )‧º·");
-  }
+    return res.status(401).send("You are not authorised to remove this friend");
 }});
 
 // for users to update their profile
 app.patch("/update/:name", verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" && req.identify.name != req.params.name){
-    return res.status(401).send("You are not authorised to update this player");
-  } else {
+  if(req.identify.roles == "player" && req.identify.name == req.params.name){
     if (
       !req.body.name ||
       !req.body.email ||
@@ -604,7 +600,7 @@ app.patch("/update/:name", verifyToken, async (req, res) => {
     }
     // Hash the password
     const hash = await bcrypt.hash(req.body.password, 10);
-
+    
     let require = await client
       .db("Assignment")
       .collection("players")
@@ -621,19 +617,26 @@ app.patch("/update/:name", verifyToken, async (req, res) => {
           },
         }
       );
+      let result = await client.db("Assignment").collection("players").findOne({name:req.body.name});
+      console.log(require);
     if (require.modifiedCount === 0) {
       res.status(400).send("Updated failed (˃̣̣̥⌓˂̣̣̥ )");
     } else {
-      res.send("Profile updated successfully 🍲_(ﾟ◇ﾟ；)ノﾞ");
+      const newToken = jwt.sign({ id: result._id,name: result.name,player_id: result.player_id ,email: result.email,roles:result.roles},process.env.JWT_SECRET,{expiresIn:'1h'});
+      res.send({
+        message: "Profile updated successfully 🍲_(ﾟ◇ﾟ；)ノﾞ",
+        token: newToken
+      });
     }
+  } else {
+    return res.status(401).send("You are not authorised to update this player");
   }
+  
 });
 
 //for users to delete their account
-app.delete("/delete/:name", verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" && req.identify.name != req.params.name){
-    return res.status(401).send("You are not authorised to delete this player");
-  } else {
+app.delete("/delete/:name",verifyToken, async (req, res) => {
+  if(req.identify.roles == "player" && req.identify.name == req.params.name){
     let existing = await client.db("Assignment").collection("players").findOne({
       name: req.params.name,
     });
@@ -649,16 +652,14 @@ app.delete("/delete/:name", verifyToken, async (req, res) => {
     }else{
       res.status(400).send("Player not found ( ˘︹˘ )");
     }
-    
+  } else {
+    return res.status(401).send("You are not authorised to delete this player");
   }
 });
 
 //for users
 app.get("/readchests", verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" || req.identify.roles != "admin"){
-    return res.status(401).send("You are not authorised to view the chests");
-  }
-  else{
+  if(req.identify.roles == "player" || req.identify.roles == "admin"){
     const chests = await client
       .db("Assignment")
       .collection("chests")
@@ -666,191 +667,192 @@ app.get("/readchests", verifyToken, async (req, res) => {
       .toArray();
     res.send(chests);
   }
+  else{
+    return res.status(401).send("You are not authorised to view the chests");
+  }
 });
 
 //users
 app.patch("/buying_chest", verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" || req.identify.name != req.body.name){
-    return res.status(401).send("You are not authorised to buy a chest");
-  }
-  if (!req.body.name || !req.body.email || !req.body.chest) {
-    return res
-      .status(400)
-      .send("name,email and chest are required. ( ･ิ⌣･ิ)📦(‘∀’●)♡");
-  }
-  let player = await client
-    .db("Assignment")
-    .collection("players")
-    .findOne({
-      $and: [{ name: req.body.name }, { email: req.body.email }],
+  if(req.identify.roles == "player" || req.identify.name == req.body.name){
+    if (!req.body.name || !req.body.email || !req.body.chest) {
+      return res
+        .status(400)
+        .send("name,email and chest are required. ( ･ิ⌣･ิ)📦(‘∀’●)♡");
+    }
+    let player = await client
+      .db("Assignment")
+      .collection("players")
+      .findOne({
+        $and: [{ name: req.body.name }, { email: req.body.email }],
+      });
+    let chest = await client.db("Assignment").collection("chests").findOne({
+      chest: req.body.chest,
     });
-  let chest = await client.db("Assignment").collection("chests").findOne({
-    chest: req.body.chest,
-  });
-  // Randomly select a character from the characters array
-  let character_in_chest = await client
-    .db("Assignment")
-    .collection("chests")
-    .aggregate([
-      { $match: { chest: req.body.chest } },
-      { $unwind: "$characters" },
-      { $sample: { size: 1 } },
-      {
-        $lookup: {
-          from: "characters",
-          localField: "characters",
-          foreignField: "name",
-          as: "characters",
+    // Randomly select a character from the characters array
+    let character_in_chest = await client
+      .db("Assignment")
+      .collection("chests")
+      .aggregate([
+        { $match: { chest: req.body.chest } },
+        { $unwind: "$characters" },
+        { $sample: { size: 1 } },
+        {
+          $lookup: {
+            from: "characters",
+            localField: "characters",
+            foreignField: "name",
+            as: "characters",
+          },
         },
-      },
-    ])
-    .toArray();
-  console.log(player);
-  console.log(character_in_chest[0]);
-  console.log(character_in_chest[0].characters);
-  console.log(character_in_chest[0].characters[0].name);
-  console.log(chest);
-
-  if (!player) {
-    return res.status(400).send("User or email are wrong ༼☯﹏☯༽");
-  }
-  // Check if the player has enough money
-  if (player.money < chest.price) {
-    return res.send(
-      "Not enough money to buy chest. Please compete more battles to earn more money.(இ﹏இ`｡)"
-    );
-  }
-
-  if (chest) {
-    if (
-      player.collection.characterList.includes(
-        character_in_chest[0].characters[0].name
-      )
-    ) {
-      let index = player.collection.characterList.indexOf(
-        character_in_chest[0].characters[0].name
-      );
-      console.log(index);
-      let your_char = await client
-        .db("Assignment")
-        .collection("characters_of_players")
-        .findOneAndUpdate(
-          {
-            char_id: index,
-          },
-          {
-            $inc: {
-              "characters.$[].health": 100,
-              "characters.$[].attack": 100,
-              "characters.$[].speed": 0.1,
-            },
-          }
-        );
-      console.log(your_char);
+      ])
+      .toArray();
+    console.log(player);
+    console.log(character_in_chest[0]);
+    console.log(character_in_chest[0].characters);
+    console.log(character_in_chest[0].characters[0].name);
+    console.log(chest);
+  
+    if (!player) {
+      return res.status(400).send("User or email are wrong ༼☯﹏☯༽");
+    }
+    // Check if the player has enough money
+    if (player.money < chest.price) {
       return res.send(
-        // powerUp,
-        character_in_chest[0].characters[0].name +
-          ` already exist in your collection, power up instead 💪🏼`
+        "Not enough money to buy chest. Please compete more battles to earn more money.(இ﹏இ`｡)"
       );
-    } else {
-      let buying = await client
-        .db("Assignment")
-        .collection("players")
-        .updateOne(
-          {
-            player_id: player.player_id,
-          },
-          {
-            $addToSet: {
-              "collection.characterList":
-                character_in_chest[0].characters[0].name,
-            },
-            $inc: {
-              money: -chest.price,
-            },
-            $set: {
-              upset: true,
-            },
-          }
+    }
+  
+    if (chest) {
+      if (
+        player.collection.characterList.includes(
+          character_in_chest[0].characters[0].name
+        )
+      ) {
+        let index = player.collection.characterList.indexOf(
+          character_in_chest[0].characters[0].name
         );
-      console.log(buying);
-      if (buying.modifiedCount === 0) {
-        return res.send("Failed to buy character (☍﹏⁰)｡");
-      } else {
-        let countNum = await client
+        console.log(index);
+        let your_char = await client
           .db("Assignment")
           .collection("characters_of_players")
-          .countDocuments();
-        let randomChar = await client
-          .db("Assignment")
-          .collection("characters")
-          .aggregate([
+          .findOneAndUpdate(
             {
-              $match: { name: character_in_chest[0].characters[0].name },
+              char_id: index,
             },
             {
-              $project: {
-                _id: 0,
-                name: 1,
-                health: 1,
-                attack: 1,
-                speed: 1,
-                type: 1,
+              $inc: {
+                "characters.$[].health": 100,
+                "characters.$[].attack": 100,
+                "characters.$[].speed": 0.1,
               },
-            },
-          ])
-          .toArray();
-        await client
-          .db("Assignment")
-          .collection("characters_of_players")
-          .insertOne({ char_id: countNum, characters: randomChar });
-        await client
+            }
+          );
+        console.log(your_char);
+        return res.send(
+          // powerUp,
+          character_in_chest[0].characters[0].name +
+            ` already exist in your collection, power up instead 💪🏼`
+        );
+      } else {
+        let buying = await client
           .db("Assignment")
           .collection("players")
           .updateOne(
-            { player_id: player.player_id },
             {
-              $push: {
-                "collection.charId": countNum,
-                // name: character_in_chest[0].characters,
-              },
+              player_id: player.player_id,
             },
-            { upsert: true }
+            {
+              $addToSet: {
+                "collection.characterList":
+                  character_in_chest[0].characters[0].name,
+              },
+              $inc: {
+                money: -chest.price,
+              },
+              $set: {
+                upset: true,
+              },
+            }
           );
-        // Check if the player has collected 21 characters
-        if (player.collection.characterList.length === 21) {
+        console.log(buying);
+        if (buying.modifiedCount === 0) {
+          return res.send("Failed to buy character (☍﹏⁰)｡");
+        } else {
+          let countNum = await client
+            .db("Assignment")
+            .collection("characters_of_players")
+            .countDocuments();
+          let randomChar = await client
+            .db("Assignment")
+            .collection("characters")
+            .aggregate([
+              {
+                $match: { name: character_in_chest[0].characters[0].name },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  name: 1,
+                  health: 1,
+                  attack: 1,
+                  speed: 1,
+                  type: 1,
+                },
+              },
+            ])
+            .toArray();
+          await client
+            .db("Assignment")
+            .collection("characters_of_players")
+            .insertOne({ char_id: countNum, characters: randomChar });
           await client
             .db("Assignment")
             .collection("players")
             .updateOne(
               { player_id: player.player_id },
               {
-                $addToSet: {
-                  achievements:
-                    "Congraturation!!!👑You complete all characters collection🏆",
+                $push: {
+                  "collection.charId": countNum,
+                  // name: character_in_chest[0].characters,
                 },
-              }
+              },
+              { upsert: true }
             );
+          // Check if the player has collected 21 characters
+          if (player.collection.characterList.length === 21) {
+            await client
+              .db("Assignment")
+              .collection("players")
+              .updateOne(
+                { player_id: player.player_id },
+                {
+                  $addToSet: {
+                    achievements:
+                      "Congraturation!!!👑You complete all characters collection🏆",
+                  },
+                }
+              );
+          }
+          return res.send(
+            "Chest bought successfully🦍, you got " +
+              character_in_chest[0].characters[0].name +
+              " in your collection."
+          );
         }
-        return res.send(
-          "Chest bought successfully🦍, you got " +
-            character_in_chest[0].characters[0].name +
-            " in your collection."
-        );
       }
+    } else {
+      res.send("Chest not found(T⌓T)");
     }
-  } else {
-    res.send("Chest not found(T⌓T)");
+  }else{
+    return res.status(401).send("You are not authorised to buy a chest");
   }
 });
 
 //put point //users
 app.get("/leaderboard", verifyToken, async (req, res) => {
-    if (req.identify.roles != "player" || req.identify.roles != "admin") {
-      return res.status(401).send("You are not authorised to view the leaderboard");
-    } else {
-    
-    let leaderboard = await client
+    if (req.identify.roles == "player" || req.identify.roles == "admin") {
+      let leaderboard = await client
       .db("Assignment")
       .collection("players")
       .aggregate([
@@ -883,16 +885,15 @@ app.get("/leaderboard", verifyToken, async (req, res) => {
         );
     }
     res.send(leaderboard);
+    } else {
+    return res.status(401).send("You are not authorised to view the leaderboard");
   }
 }); 
   
 //users
 app.patch("/change_selected_char", verifyToken, async (req, res) => {
-    if(req.identify.roles != "player" && req.identify.name != req.body.name){
-      return res.status(401).send("You are not authorised to change the selected character");
-    }
-    else{
-    if (!req.body.name || !req.body.email || !req.body.character_selected) {
+    if(req.identify.roles == "player" && req.identify.name == req.body.name){
+      if (!req.body.name || !req.body.email || !req.body.character_selected) {
       return res
         .status(400)
         .send("name,email and character_selected are required.（◎ー◎；）");
@@ -946,241 +947,241 @@ app.patch("/change_selected_char", verifyToken, async (req, res) => {
           "🐣"
       );
     }
+    }
+    else{
+    return res.status(401).send("You are not authorised to change the selected character");
   }});
 
 //users
 app.patch("/battle", verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" && req.identify.name != req.body.name){
-    return res.status(401).send("You are not authorised to battle this player");
-  }
-  else{
-  if (!req.body.name || !req.body.email) {
-    return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
-  }
-
-  const user = await client
-    .db("Assignment")
-    .collection("players")
-    .findOne({
-      $and: [
-        {
-          name: req.body.name,
-          email: req.body.email,
-        },
-      ],
-    });
-  if (!user) {
-    return res.status(404).send("Player not found ໒( ⊡ _ ⊡ )७");
-  } else if (user.collection.character_selected === null) {
-    return res.status(400).send("Character not selected. (◔_◔)🍔🍕");
-  }
-  let attacker = await client
-    .db("Assignment")
-    .collection("players")
-    .aggregate([
-      { $match: { name: req.body.name } },
-      { $project: { _id: 0, name: 1, player_id: 1, collection: 1 } },
-    ])
-    .toArray();
-  //avoid the same player found
-  let defender;
-  do {
-    defender = await client
+  if(req.identify.roles == "player" && req.identify.name == req.body.name){
+    if (!req.body.name || !req.body.email) {
+      return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
+    }
+  
+    const user = await client
+      .db("Assignment")
+      .collection("players")
+      .findOne({
+        $and: [
+          {
+            name: req.body.name,
+            email: req.body.email,
+          },
+        ],
+      });
+    if (!user) {
+      return res.status(404).send("Player not found ໒( ⊡ _ ⊡ )७");
+    } else if (user.collection.character_selected === null) {
+      return res.status(400).send("Character not selected. (◔_◔)🍔🍕");
+    }
+    let attacker = await client
       .db("Assignment")
       .collection("players")
       .aggregate([
-        { $sample: { size: 1 } },
+        { $match: { name: req.body.name } },
         { $project: { _id: 0, name: 1, player_id: 1, collection: 1 } },
       ])
       .toArray();
-  } while (attacker[0].player_id === defender[0].player_id);
-
-  console.log(attacker[0]);
-  console.log(defender[0]);
-  if (!attacker[0] || !defender[0]) {
-    return res.status(400).send("Player not found (●･̆⍛･̆●)");
-  }
-  //need to read char of player*******
-  const charId_attacker = attacker[0].collection.character_selected.charId;
-  const charId_defender = defender[0].collection.character_selected.charId;
-  console.log(charId_attacker);
-  console.log(charId_defender);
-
-  let attacker_character = await client
-    .db("Assignment")
-    .collection("characters_of_players")
-    .findOne({ char_id: charId_attacker });
-  let defender_character = await client
-    .db("Assignment")
-    .collection("characters_of_players")
-    .findOne({ char_id: charId_defender });
-  console.log(attacker_character);
-  console.log(defender_character);
-  let battle_round = 0;
-  let newHealthDefender;
-  let newHealthAttacker;
-
-  if (attacker_character && defender_character) {
+    //avoid the same player found
+    let defender;
     do {
-      newHealthDefender =
-        defender_character.characters[0].health -
-        attacker_character.characters[0].attack *
-          attacker_character.characters[0].speed;
-      newHealthAttacker =
-        attacker_character.characters[0].health -
-        defender_character.characters[0].attack *
-          defender_character.characters[0].speed;
-
-      // Update the characters' health
-      defender_character.characters[0].health = newHealthDefender;
-      attacker_character.characters[0].health = newHealthAttacker;
-
-      battle_round++;
-    } while (
-      defender_character.characters[0].health > 0 &&
-      attacker_character.characters[0].health > 0
-    );
-
-    console.log(battle_round);
-    console.log("Attacker health left: ", newHealthDefender);
-    console.log("Defender health left: ", newHealthAttacker);
-  } else {
-    return res.status(400).send("Character not found(●･̆⍛･̆●)");
-  }
-
-  let winner =
-    newHealthAttacker > newHealthDefender ? attacker[0].name : defender[0].name;
-  let loser =
-    newHealthAttacker < newHealthDefender ? attacker[0].name : defender[0].name;
-
-  if (newHealthAttacker === newHealthDefender) {
-    return res.send("Draw. Try attack again with your luck and brain👋≧◉ᴥ◉≦");
-  } else {
-    if (battle_round > 0) {
-      let battleRecord = {
-        attacker: attacker[0].name,
-        defender: defender[0].name,
-        battleRound: battle_round,
-        winner: winner,
-        date: new Date(),
-      };
-      console.log(winner);
-      console.log(loser);
-      console.log(battleRecord);
-      if (newHealthAttacker <= 0) {
-        res.send(`Nice try, you will be better next time!≧◠ᴥ◠≦✊`);
-      } else {
-        await client
-          .db("Assignment")
-          .collection("battle_record")
-          .insertOne({ battleRecord });
-
-        await client
-          .db("Assignment")
-          .collection("players")
-          .updateOne(
-            { name: winner },
-            {
-              $inc: { points: 3, money: 500 },
-              $set: {
-                notification: `Congratulations, you won a battle!≧◠‿◠≦✌`,
-              },
-            },
-            { upsert: true }
-          );
-
-        // First, decrease the points
-        await client
-          .db("Assignment")
-          .collection("players")
-          .updateOne(
-            { name: loser },
-            {
-              $inc: { points: -1 },
-              $set: {
-                notification: "You are being attacked in the game!( ˘︹˘ )",
-              },
-            },
-            { upsert: true }
-          );
-
-        // Then, ensure that points are not less than 0
-        await client
-          .db("Assignment")
-          .collection("players")
-          .updateOne(
-            { name: loser, points: { $lt: 0 } },
-            {
-              $set: { points: 0 },
-            }
-          );
-
-        let playerRecord = await client
-          .db("Assignment")
-          .collection("players")
-          .findOne({ name: winner });
-
-        if (
-          playerRecord &&
-          playerRecord.achievements &&
-          !playerRecord.achievements.includes("First win")
-        ) {
+      defender = await client
+        .db("Assignment")
+        .collection("players")
+        .aggregate([
+          { $sample: { size: 1 } },
+          { $project: { _id: 0, name: 1, player_id: 1, collection: 1 } },
+        ])
+        .toArray();
+    } while (attacker[0].player_id === defender[0].player_id);
+  
+    console.log(attacker[0]);
+    console.log(defender[0]);
+    if (!attacker[0] || !defender[0]) {
+      return res.status(400).send("Player not found (●･̆⍛･̆●)");
+    }
+    //need to read char of player*******
+    const charId_attacker = attacker[0].collection.character_selected.charId;
+    const charId_defender = defender[0].collection.character_selected.charId;
+    console.log(charId_attacker);
+    console.log(charId_defender);
+  
+    let attacker_character = await client
+      .db("Assignment")
+      .collection("characters_of_players")
+      .findOne({ char_id: charId_attacker });
+    let defender_character = await client
+      .db("Assignment")
+      .collection("characters_of_players")
+      .findOne({ char_id: charId_defender });
+    console.log(attacker_character);
+    console.log(defender_character);
+    let battle_round = 0;
+    let newHealthDefender;
+    let newHealthAttacker;
+  
+    if (attacker_character && defender_character) {
+      do {
+        newHealthDefender =
+          defender_character.characters[0].health -
+          attacker_character.characters[0].attack *
+            attacker_character.characters[0].speed;
+        newHealthAttacker =
+          attacker_character.characters[0].health -
+          defender_character.characters[0].attack *
+            defender_character.characters[0].speed;
+  
+        // Update the characters' health
+        defender_character.characters[0].health = newHealthDefender;
+        attacker_character.characters[0].health = newHealthAttacker;
+  
+        battle_round++;
+      } while (
+        defender_character.characters[0].health > 0 &&
+        attacker_character.characters[0].health > 0
+      );
+  
+      console.log(battle_round);
+      console.log("Attacker health left: ", newHealthDefender);
+      console.log("Defender health left: ", newHealthAttacker);
+    } else {
+      return res.status(400).send("Character not found(●･̆⍛･̆●)");
+    }
+  
+    let winner =
+      newHealthAttacker > newHealthDefender ? attacker[0].name : defender[0].name;
+    let loser =
+      newHealthAttacker < newHealthDefender ? attacker[0].name : defender[0].name;
+  
+    if (newHealthAttacker === newHealthDefender) {
+      return res.send("Draw. Try attack again with your luck and brain👋≧◉ᴥ◉≦");
+    } else {
+      if (battle_round > 0) {
+        let battleRecord = {
+          attacker: attacker[0].name,
+          defender: defender[0].name,
+          battleRound: battle_round,
+          winner: winner,
+          date: new Date(),
+        };
+        console.log(winner);
+        console.log(loser);
+        console.log(battleRecord);
+        if (newHealthAttacker <= 0) {
+          res.send(`Nice try, you will be better next time!≧◠ᴥ◠≦✊`);
+        } else {
+          await client
+            .db("Assignment")
+            .collection("battle_record")
+            .insertOne({ battleRecord });
+  
           await client
             .db("Assignment")
             .collection("players")
             .updateOne(
               { name: winner },
               {
-                $push: {
-                  characters: {
-                    _id: countNum,
-                    name: character_in_chest[0].characters,
-                  },
-                },
-                $addToSet: {
-                  achievements: "First win",
+                $inc: { points: 3, money: 500 },
+                $set: {
+                  notification: `Congratulations, you won a battle!≧◠‿◠≦✌`,
                 },
               },
               { upsert: true }
             );
+  
+          // First, decrease the points
+          await client
+            .db("Assignment")
+            .collection("players")
+            .updateOne(
+              { name: loser },
+              {
+                $inc: { points: -1 },
+                $set: {
+                  notification: "You are being attacked in the game!( ˘︹˘ )",
+                },
+              },
+              { upsert: true }
+            );
+  
+          // Then, ensure that points are not less than 0
+          await client
+            .db("Assignment")
+            .collection("players")
+            .updateOne(
+              { name: loser, points: { $lt: 0 } },
+              {
+                $set: { points: 0 },
+              }
+            );
+  
+          let playerRecord = await client
+            .db("Assignment")
+            .collection("players")
+            .findOne({ name: winner });
+  
+          if (
+            playerRecord &&
+            playerRecord.achievements &&
+            !playerRecord.achievements.includes("First win")
+          ) {
+            await client
+              .db("Assignment")
+              .collection("players")
+              .updateOne(
+                { name: winner },
+                {
+                  $push: {
+                    characters: {
+                      _id: countNum,
+                      name: character_in_chest[0].characters,
+                    },
+                  },
+                  $addToSet: {
+                    achievements: "First win",
+                  },
+                },
+                { upsert: true }
+              );
+          }
+          res.send(
+            `Congratulations, you won the battle after ${battle_round} rounds!\(≧∇≦)/`
+          );
         }
-        res.send(
-          `Congratulations, you won the battle after ${battle_round} rounds!\(≧∇≦)/`
-        );
+      } else {
+        res.send("Battle failed 川o･-･)ﾉ");
       }
-    } else {
-      res.send("Battle failed 川o･-･)ﾉ");
     }
-  }
+  }else{
+  return res.status(401).send("You are not authorised to battle this player");
 }});
+
 //users
 app.get("/achievements", verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" && req.identify.playerId != req.body.player_id){
-    return res.status(401).send("You are not authorised to view the achievements of this playe");
-  }
-  else{
-  if (!req.body.player_id) {
-    return res.status(400).send("player_id is required. （゜ρ゜)/");
-  }
-  let user = await client
-    .db("Assignment")
-    .collection("players")
-    .findOne({
-      player_id: req.body.player_id,
-      achievements: { $exists: true },
-    });
-  if (!user) {
-    res.status(404).send("Find a way to get your achievements. (。-ω-)ﾉ");
-  }
-  res.send(user.achievements);
+  if(req.identify.roles == "player" && req.identify.player_id == req.body.player_id){
+    if (!req.body.player_id) {
+      return res.status(400).send("player_id is required. （゜ρ゜)/");
+    }
+    let user = await client
+      .db("Assignment")
+      .collection("players")
+      .findOne({
+        player_id: req.body.player_id,
+        achievements: { $exists: true },
+      });
+    if (!user) {
+      res.status(404).send("Find a way to get your achievements. (。-ω-)ﾉ");
+    }
+    res.send(user.achievements);
+  }else{
+  return res.status(401).send("You are not authorised to view the achievements of this player");
 }});
+
 //users
 app.get("/read_battle_record/:player_id",verifyToken, async (req, res) => {
-  if(req.identify.roles != "player" && req.identify.playerId  != req.params.player_id){
-    return res.status(401).send("You are not authorised to battle this player");
-  }
-  else{
-  let history = await client
+  if(req.identify.roles == "player" && req.identify.player_id  == req.params.player_id){
+    let history = await client
     .db("Assignment")
     .collection("battle_record")
     .find({
@@ -1200,6 +1201,8 @@ app.get("/read_battle_record/:player_id",verifyToken, async (req, res) => {
   }
 
   res.send(history);
+  }else{
+    return res.status(401).send("You are not authorised to read the battle record of this player");
 }});
 
 app.listen(port, () => {
@@ -1209,7 +1212,7 @@ app.listen(port, () => {
 //Path:package.json
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri =
-  "mongodb+srv://b022210249:Asdfghjkl2326@cluster0.qexjojg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+  `mongodb+srv://b022210249:${process.env.MongoDb_password}@cluster0.qexjojg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
