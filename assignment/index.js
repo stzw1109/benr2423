@@ -82,7 +82,7 @@ app.post("/register", async (req, res) => {
         },
       ])
       .toArray();
-    console.log(Lilla);
+    console.log(Lilla[0]);
     await client
       .db("Assignment")
       .collection("characters_of_players")
@@ -94,11 +94,12 @@ app.post("/register", async (req, res) => {
   }
 });
 
-//login for users (need to change)
-app.post("/login", async (req, res) => {
+//login for users 
+app.post("/userlogin", async (req, res) => {
   if (!req.body.name || !req.body.email) {
     return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
   }
+
   let resp = await client
     .db("Assignment")
     .collection("players")
@@ -128,6 +129,40 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/adminLogin",async(req,res)=>{
+  if (!req.body.name || !req.body.email) {
+    return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
+  }
+
+  let resp = await client
+    .db("Assignment")
+    .collection("players")
+    .findOne({
+      $and:[{name:req.body.name},{email:req.body.email}]
+    });
+
+  if (!resp) {
+    res.send("Admin not found ⸨◺_◿⸩");
+  } else {
+    // Check if password is provided
+    if (resp.password) {
+      if (bcrypt.compareSync(req.body.password, resp.password)) {
+        const token = jwt.sign({ id: resp._id,name: resp.name,email: resp.email,roles:resp.roles},process.env.JWT_SECRET,{expiresIn:'1h'});
+        console.log (token);
+
+        res.status(200).send({
+          message: "Admin login successful. Do yer thang in the admin panel!!\n(っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )",
+          token: token
+        });
+
+      } else {
+        res.send("Wrong Password ⸨◺_◿⸩");
+      }
+    } else {
+      res.send("Password not provided ⸨◺_◿⸩");
+    }
+  }
+})
 //login to get startpack 
 app.patch("/login/starterpack",verifyToken, async (req, res) => {
   if (req.identify.roles == "player" && req.identify.name == req.body.name) {
@@ -347,6 +382,47 @@ app.patch("/add_character_to_chest",verifyToken,async (req, res) => {
 });
 
 //need Developer token
+app.patch("/delete_character", verifyToken, async (req, res) => {
+  if (req.identify.roles != "admin") {
+    return res.status(401).send("You are not authorised to delete this character");
+  }
+  if (!req.body.chest || !req.body.char_name) {
+    return res.status(400).send("name and char_name are required. ( ˘ ³˘)❤");
+  }
+  let char = await client.db("Assignment").collection("characters").find({
+    name: req.body.char_name,
+  });
+  if (char) {
+    await client.db("Assignment").collection("characters").deleteOne({
+      name: req.body.char_name,
+    });
+    let char_chest = await client.db("Assignment").collection("chests").find({
+      chest: req.body.chest,
+    });
+    if (char_chest) {
+      await client
+        .db("Assignment")
+        .collection("chests")
+        .updateOne(
+          {
+            chest: req.body.chest,
+          },
+          {
+            $pull: {
+              characters: req.body.char_name,
+            },
+          }
+        );
+      res.send("Character deleted successfully ( ˘ ³˘)❤");
+    } else {
+      res.status(400).send("Character in chest not found ( ˘︹˘ )");
+    }
+  } else {
+    res.status(400).send("Character not found ( ˘︹˘ )");
+  }
+});
+
+//need Developer token
 app.patch("/characterupdate/:charactername",verifyToken,async (req, res) => {
   if(req.identify.roles == "admin"){
     if (
@@ -524,8 +600,9 @@ app.patch("/accept_friend_request", verifyToken, async (req, res) => {
     if (accept.modifiedCount === 0 && accept2.modifiedCount === 0) {
       res.status(400).send("Failed to accept friend request (=ↀωↀ=)");
     } else {
+      console.log(accepter.friends.friendList.length);
       res.send("Friend request accepted (ﾐⓛᆽⓛﾐ)✧");
-      if (player.friends.friendList.length > 5) {
+      if (accepter.friends.friendList.length = 5) {
         await client
           .db("Assignment")
           .collection("players")
@@ -805,7 +882,7 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
           await client
             .db("Assignment")
             .collection("characters_of_players")
-            .insertOne({ char_id: countNum, characters: randomChar });
+            .insertOne({ char_id: countNum, characters: randomChar[0] });
           await client
             .db("Assignment")
             .collection("players")
@@ -849,6 +926,18 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
   }
 });
 
+//for admin
+app.delete("/deleteChest/:chestName",verifyToken,async(req,res)=>{
+  if(req.identify.roles == "admin"){
+    let delete_req = await client.db("Assignment").collection("chests").deleteOne({
+      chest: req.params.chestName
+    });
+    console.log(delete_req);
+    res.status(200).send("Chest deleted successfully q(≧▽≦q)");
+  }else{
+    res.status(403).send("You are not authorised to delete this chest");
+  }
+})
 //put point //users
 app.get("/leaderboard", verifyToken, async (req, res) => {
     if (req.identify.roles == "player" || req.identify.roles == "admin") {
@@ -998,6 +1087,7 @@ app.patch("/battle", verifyToken, async (req, res) => {
   
     console.log(attacker[0]);
     console.log(defender[0]);
+
     if (!attacker[0] || !defender[0]) {
       return res.status(400).send("Player not found (●･̆⍛･̆●)");
     }
@@ -1011,10 +1101,12 @@ app.patch("/battle", verifyToken, async (req, res) => {
       .db("Assignment")
       .collection("characters_of_players")
       .findOne({ char_id: charId_attacker });
+
     let defender_character = await client
       .db("Assignment")
       .collection("characters_of_players")
       .findOne({ char_id: charId_defender });
+
     console.log(attacker_character);
     console.log(defender_character);
     let battle_round = 0;
@@ -1065,18 +1157,22 @@ app.patch("/battle", verifyToken, async (req, res) => {
           winner: winner,
           date: new Date(),
         };
-        console.log(winner);
-        console.log(loser);
-        console.log(battleRecord);
-        if (newHealthAttacker <= 0) {
-          res.send(`Nice try, you will be better next time!≧◠ᴥ◠≦✊`);
-        } else {
-          await client
+
+        await client
             .db("Assignment")
             .collection("battle_record")
             .insertOne({ battleRecord });
-  
-          await client
+
+        console.log(winner);
+        console.log(loser);
+        console.log(battleRecord);
+
+        if (loser == attacker[0].name) {
+          res.send(`Nice try, you will be better next time!≧◠ᴥ◠≦✊`);
+        } else {
+          res.send(`Congratulations, you won the battle after ${battle_round} rounds!\(≧∇≦)/`);
+        }
+        await client
             .db("Assignment")
             .collection("players")
             .updateOne(
@@ -1145,10 +1241,6 @@ app.patch("/battle", verifyToken, async (req, res) => {
                 { upsert: true }
               );
           }
-          res.send(
-            `Congratulations, you won the battle after ${battle_round} rounds!\(≧∇≦)/`
-          );
-        }
       } else {
         res.send("Battle failed 川o･-･)ﾉ");
       }
@@ -1205,12 +1297,25 @@ app.get("/read_battle_record/:player_id",verifyToken, async (req, res) => {
     return res.status(401).send("You are not authorised to read the battle record of this player");
 }});
 
+app.delete("/deleteBattleRecord/:player_name",verifyToken,async(req,res)=>{
+  if(req.identify.roles == "admin"){
+    let delete_req = await client.db("Assignment").collection("battle_record").deleteMany({
+      "battleRecord.attacker": req.params.player_name
+    });
+    console.log(delete_req);
+    res.status(200).send("Battle record deleted successfully ( ˘︹˘ )");
+  }else{
+    res.status(403).send("You are not authorised to delete the battle record");
+  }
+})
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
 
 //Path:package.json
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { message } = require('statuses');
 const uri =
   `mongodb+srv://b022210249:${process.env.MongoDb_password}@cluster0.qexjojg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
