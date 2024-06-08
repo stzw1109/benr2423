@@ -58,7 +58,7 @@ app.post("/register", async (req, res) => {
         roles:"player",
         money: 0,
         points: 0,
-        achievments: ["A beginner player"],
+        achievements: ["A beginner player"],
         friends: { friendList: [], sentRequests: [], needAcceptRequests: [] },
         //can do relationship??
         starterPackTaken: false,
@@ -95,7 +95,7 @@ app.post("/register", async (req, res) => {
 });
 
 //login for users 
-app.post("/userlogin", async (req, res) => {
+app.post("/userLogin", async (req, res) => {
   if (!req.body.name || !req.body.email) {
     return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
   }
@@ -929,11 +929,20 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
 //for admin
 app.delete("/deleteChest/:chestName",verifyToken,async(req,res)=>{
   if(req.identify.roles == "admin"){
-    let delete_req = await client.db("Assignment").collection("chests").deleteOne({
+    let existing_chest = await client.db("Assignment").collection("chests").findOne({
       chest: req.params.chestName
     });
-    console.log(delete_req);
-    res.status(200).send("Chest deleted successfully q(≧▽≦q)");
+    
+    if(existing_chest){
+        let delete_req = await client.db("Assignment").collection("chests").deleteOne({
+        chest: req.params.chestName
+      });
+        console.log(delete_req);
+        res.status(200).send("Chest deleted successfully q(≧▽≦q)");
+    }else{
+      res.status(400).send("Chest not found ( ˘︹˘ )");
+    }
+    
   }else{
     res.status(403).send("You are not authorised to delete this chest");
   }
@@ -1079,6 +1088,7 @@ app.patch("/battle", verifyToken, async (req, res) => {
         .db("Assignment")
         .collection("players")
         .aggregate([
+          {$match:{name:{$ne:"admin"}}},
           { $sample: { size: 1 } },
           { $project: { _id: 0, name: 1, player_id: 1, collection: 1 } },
         ])
@@ -1119,6 +1129,7 @@ app.patch("/battle", verifyToken, async (req, res) => {
           defender_character.characters[0].health -
           attacker_character.characters[0].attack *
             attacker_character.characters[0].speed;
+            
         newHealthAttacker =
           attacker_character.characters[0].health -
           defender_character.characters[0].attack *
@@ -1134,9 +1145,9 @@ app.patch("/battle", verifyToken, async (req, res) => {
         attacker_character.characters[0].health > 0
       );
   
-      console.log(battle_round);
-      console.log("Attacker health left: ", newHealthDefender);
-      console.log("Defender health left: ", newHealthAttacker);
+      console.log(`Battle round: ${battle_round}`); 
+      console.log("Attacker health left: ", newHealthAttacker );
+      console.log("Defender health left: ", newHealthDefender );
     } else {
       return res.status(400).send("Character not found(●･̆⍛･̆●)");
     }
@@ -1228,17 +1239,10 @@ app.patch("/battle", verifyToken, async (req, res) => {
               .updateOne(
                 { name: winner },
                 {
-                  $push: {
-                    characters: {
-                      _id: countNum,
-                      name: character_in_chest[0].characters,
-                    },
-                  },
                   $addToSet: {
                     achievements: "First win",
                   },
-                },
-                { upsert: true }
+                }
               );
           }
       } else {
@@ -1271,15 +1275,15 @@ app.get("/achievements", verifyToken, async (req, res) => {
 }});
 
 //users
-app.get("/read_battle_record/:player_id",verifyToken, async (req, res) => {
-  if(req.identify.roles == "player" && req.identify.player_id  == req.params.player_id){
+app.get("/read_battle_record/:player_name",verifyToken, async (req, res) => {
+  if(req.identify.roles == "player" && req.identify.name  == req.params.player_name){
     let history = await client
     .db("Assignment")
     .collection("battle_record")
     .find({
       $or: [
-        { "battleRecord.attacker": req.params.player_id },
-        { "battleRecord.defender": req.params.player_id },
+        { "battleRecord.attacker": req.params.player_name },
+        { "battleRecord.defender": req.params.player_name },
       ],
     })
     .toArray();
