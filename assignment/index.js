@@ -165,10 +165,12 @@ app.post("/adminLogin",async(req,res)=>{
 })
 //login to get startpack 
 app.patch("/login/starterpack",verifyToken, async (req, res) => {
-  if (req.identify.roles == "player" && req.identify.name == req.body.name) {
-    if (!req.body.name) {
+  if (!req.body.name) {
       return res.status(400).send("name is required.☜(`o´)");
     }
+
+  if (req.identify.roles == "player" && req.identify.name == req.body.name) {
+    
     const min = 1000;
     const max = 2000;
     const newMoneyAmount = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -277,14 +279,14 @@ app.post("/character",verifyToken, async (req, res) => {
 });
 
 //everyone can read each other(users and developers)
-app.get("/read/:player_id", verifyToken,async (req, res) => {
-  if((req.identify.roles == "player" && req.identify.player_id == req.params.player_id)||req.identify.roles == "admin"){
+app.get("/read/:player_name", verifyToken,async (req, res) => {
+  if((req.identify.roles == "player" && req.identify.name == req.params.player_name)||req.identify.roles == "admin"){
     let document = await client
     .db("Assignment")
     .collection("players")
     .aggregate([
       {
-        $match: { player_id: parseInt(req.params.player_id) },
+        $match: { name: req.params.player_name },
       },
       {
         $project: {
@@ -469,12 +471,12 @@ app.patch("/characterupdate/:charactername",verifyToken,async (req, res) => {
 
 // To send a friend request for users only
 app.post("/send_friend_request", verifyToken, async (req, res) => {
+  if (!req.body.requesterId || !req.body.requestedId) {
+    return res
+      .status(400)
+      .send("requesterId and requestedId are required. (◡́.◡̀)(^◡^ )");
+  }
   if(req.identify.roles == "player" && req.identify.player_id == req.body.requesterId){
-    if (!req.body.requesterId || !req.body.requestedId) {
-      return res
-        .status(400)
-        .send("requesterId and requestedId are required. (◡́.◡̀)(^◡^ )");
-    }
     // Check if requesterId and requestedId are different
     if (parseInt(req.body.requesterId) === parseInt(req.body.requestedId)) {
       return res
@@ -540,13 +542,12 @@ app.post("/send_friend_request", verifyToken, async (req, res) => {
 
 // To  accept a friend request for users only
 app.patch("/accept_friend_request", verifyToken, async (req, res) => {
+  if (!req.body.accepterId || !req.body.requesterId) {
+    return res
+      .status(400)
+      .send("accepterId and requesterId are required ㅇㅅㅇ");
+  }
   if(req.identify.roles == "player" && req.identify.player_id == req.body.accepterId){
-    
-    if (!req.body.accepterId || !req.body.requesterId) {
-      return res
-        .status(400)
-        .send("accepterId and requesterId are required ㅇㅅㅇ");
-    }
     if (parseInt(req.body.accepterId) === parseInt(req.body.requesterId)) {
       return res
         .status(400)
@@ -664,17 +665,17 @@ app.patch("/remove_friend/:requesterId/:friendId", verifyToken, async (req, res)
 
 // for users to update their profile
 app.patch("/update/:name", verifyToken, async (req, res) => {
+  if (
+    !req.body.name ||
+    !req.body.email ||
+    !req.body.password ||
+    !req.body.gender
+  ) {
+    return res
+      .status(400)
+      .send("name,email,password and gender are required.\n( ˘▽˘)っ♨");
+  }
   if(req.identify.roles == "player" && req.identify.name == req.params.name){
-    if (
-      !req.body.name ||
-      !req.body.email ||
-      !req.body.password ||
-      !req.body.gender
-    ) {
-      return res
-        .status(400)
-        .send("name,email,password and gender are required.\n( ˘▽˘)っ♨");
-    }
     // Hash the password
     const hash = await bcrypt.hash(req.body.password, 10);
     
@@ -751,12 +752,13 @@ app.get("/readchests", verifyToken, async (req, res) => {
 
 //users
 app.patch("/buying_chest", verifyToken, async (req, res) => {
+  if (!req.body.name || !req.body.email || !req.body.chest) {
+    return res
+      .status(400)
+      .send("name,email and chest are required. ( ･ิ⌣･ิ)📦(‘∀’●)♡");
+  }
   if(req.identify.roles == "player" || req.identify.name == req.body.name){
-    if (!req.body.name || !req.body.email || !req.body.chest) {
-      return res
-        .status(400)
-        .send("name,email and chest are required. ( ･ิ⌣･ิ)📦(‘∀’●)♡");
-    }
+    
     let player = await client
       .db("Assignment")
       .collection("players")
@@ -990,12 +992,13 @@ app.get("/leaderboard", verifyToken, async (req, res) => {
   
 //users
 app.patch("/change_selected_char", verifyToken, async (req, res) => {
+  if (!req.body.name || !req.body.email || !req.body.character_selected) {
+    return res
+      .status(400)
+      .send("name,email and character_selected are required.（◎ー◎；）");
+  }
     if(req.identify.roles == "player" && req.identify.name == req.body.name){
-      if (!req.body.name || !req.body.email || !req.body.character_selected) {
-      return res
-        .status(400)
-        .send("name,email and character_selected are required.（◎ー◎；）");
-    }
+      
     let player = await client
       .db("Assignment")
       .collection("players")
@@ -1052,11 +1055,11 @@ app.patch("/change_selected_char", verifyToken, async (req, res) => {
 
 //users
 app.patch("/battle", verifyToken, async (req, res) => {
+  if (!req.body.name || !req.body.email) {
+    return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
+  }
   if(req.identify.roles == "player" && req.identify.name == req.body.name){
-    if (!req.body.name || !req.body.email) {
-      return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
-    }
-  
+
     const user = await client
       .db("Assignment")
       .collection("players")
@@ -1255,10 +1258,10 @@ app.patch("/battle", verifyToken, async (req, res) => {
 
 //users
 app.get("/achievements", verifyToken, async (req, res) => {
+  if (!req.body.player_id) {
+    return res.status(400).send("player_id is required. （゜ρ゜)/");
+  }
   if(req.identify.roles == "player" && req.identify.player_id == req.body.player_id){
-    if (!req.body.player_id) {
-      return res.status(400).send("player_id is required. （゜ρ゜)/");
-    }
     let user = await client
       .db("Assignment")
       .collection("players")
@@ -1301,6 +1304,7 @@ app.get("/read_battle_record/:player_name",verifyToken, async (req, res) => {
     return res.status(401).send("You are not authorised to read the battle record of this player");
 }});
 
+//develepor
 app.delete("/deleteBattleRecord/:player_name",verifyToken,async(req,res)=>{
   if(req.identify.roles == "admin"){
     let delete_req = await client.db("Assignment").collection("battle_record").deleteMany({
