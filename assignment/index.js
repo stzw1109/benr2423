@@ -314,7 +314,7 @@ app.get("/readUserProfile/:player_name", verifyToken, async (req, res) => {
 
 //everyone can read each other(users and developers)
 app.get("/read/:player_name", verifyToken,async (req, res) => {
-  if((req.identify.roles == "player" && req.identify.name == req.params.player_name)||req.identify.roles == "admin"){
+  if(req.identify.roles == "player" ||req.identify.roles == "admin"){
     let document = await client
     .db("Assignment")
     .collection("players")
