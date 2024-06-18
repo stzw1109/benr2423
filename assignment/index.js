@@ -127,7 +127,7 @@ app.post("/userLogin", async (req, res) => {
       res.send("Password not provided ⸨◺_◿⸩");
     }
   }
-});
+});             
 
 app.post("/adminLogin",async(req,res)=>{
   if (!req.body.name || !req.body.email) {
@@ -668,7 +668,7 @@ app.patch("/update/:name", verifyToken, async (req, res) => {
   if (
     !req.body.name ||
     !req.body.email ||
-    !req.body.password ||
+    // !req.body.password ||
     !req.body.gender
   ) {
     return res
@@ -677,7 +677,7 @@ app.patch("/update/:name", verifyToken, async (req, res) => {
   }
   if(req.identify.roles == "player" && req.identify.name == req.params.name){
     // Hash the password
-    const hash = await bcrypt.hash(req.body.password, 10);
+    // const hash = await bcrypt.hash(req.body.password, 10);
     
     let require = await client
       .db("Assignment")
@@ -691,7 +691,7 @@ app.patch("/update/:name", verifyToken, async (req, res) => {
             name: req.body.name,
             email: req.body.email,
             gender: req.body.gender, //password??
-            password: hash,
+            // password: hash,
           },
         }
       );
