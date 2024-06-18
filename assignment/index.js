@@ -278,6 +278,40 @@ app.post("/character",verifyToken, async (req, res) => {
   }
 });
 
+app.get("/readUserProfile/:player_name", verifyToken, async (req, res) => {
+  if (
+    req.identify.roles == "player" &&
+    req.identify.name == req.params.player_name
+  ) {
+    let document = await client
+      .db("Assignment")
+      .collection("players")
+      .aggregate([
+        {
+          $match: { name: req.params.player_name },
+        },
+        {
+          $project: {
+            _id: 0,
+            player_id: 1,
+            name: 1,
+            gender: 1,
+            collection: 1,
+            points: 1,
+            friends: 1,
+            achievments: 1,
+            notifications: 1,
+            money: 1
+          },
+        },
+      ])
+      .toArray();
+    res.send(document);
+  } else {
+    return res.status(401).send("You are not authorised to read this player");
+  }
+});
+
 //everyone can read each other(users and developers)
 app.get("/read/:player_name", verifyToken,async (req, res) => {
   if((req.identify.roles == "player" && req.identify.name == req.params.player_name)||req.identify.roles == "admin"){
