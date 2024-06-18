@@ -791,8 +791,7 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
       .status(400)
       .send("name,email and chest are required. ( ･ิ⌣･ิ)📦(‘∀’●)♡");
   }
-  if(req.identify.roles == "player" || req.identify.name == req.body.name){
-    
+  if (req.identify.roles == "player" || req.identify.name == req.body.name) {
     let player = await client
       .db("Assignment")
       .collection("players")
@@ -825,7 +824,7 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
     console.log(character_in_chest[0].characters);
     console.log(character_in_chest[0].characters[0].name);
     console.log(chest);
-  
+
     if (!player) {
       return res.status(400).send("User or email are wrong ༼☯﹏☯༽");
     }
@@ -835,7 +834,6 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
         "Not enough money to buy chest. Please compete more battles to earn more money.(இ﹏இ`｡)"
       );
     }
-  
     if (chest) {
       if (
         player.collection.characterList.includes(
@@ -851,13 +849,13 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
           .collection("characters_of_players")
           .findOneAndUpdate(
             {
-              char_id: index,
+              char_id: player.collection.charId[index],
             },
             {
               $inc: {
-                "characters.$[].health": 100,
-                "characters.$[].attack": 100,
-                "characters.$[].speed": 0.1,
+                "characters.health": 100,
+                "characters.attack": 100,
+                "characters.speed": 0.1,
               },
             }
           );
@@ -873,7 +871,7 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
           .collection("players")
           .updateOne(
             {
-              player_id: player.player_id,
+              name: req.body.name,
             },
             {
               $addToSet: {
@@ -917,17 +915,36 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
             .toArray();
           await client
             .db("Assignment")
+            .collection("players")
+            .updateOne(
+              {
+                name: req.body.name,
+              },
+              {
+                $addToSet: {
+                  "collection.characterList":
+                    character_in_chest[0].characters[0].name,
+                },
+                $inc: {
+                  money: -chest.price,
+                },
+                $set: {
+                  upset: true,
+                },
+              }
+            );
+          await client
+            .db("Assignment")
             .collection("characters_of_players")
             .insertOne({ char_id: countNum, characters: randomChar[0] });
           await client
             .db("Assignment")
             .collection("players")
             .updateOne(
-              { player_id: player.player_id },
+              { name: req.body.name },
               {
                 $push: {
                   "collection.charId": countNum,
-                  // name: character_in_chest[0].characters,
                 },
               },
               { upsert: true }
@@ -938,7 +955,7 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
               .db("Assignment")
               .collection("players")
               .updateOne(
-                { player_id: player.player_id },
+                { name: req.body.name },
                 {
                   $addToSet: {
                     achievements:
@@ -957,7 +974,7 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
     } else {
       res.send("Chest not found(T⌓T)");
     }
-  }else{
+  } else {
     return res.status(401).send("You are not authorised to buy a chest");
   }
 });
