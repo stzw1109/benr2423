@@ -1482,34 +1482,6 @@ app.patch("/battle", verifyToken, async (req, res) => {
   }
 });
 
-// An API to get a player's achievements
-app.get("/achievements", verifyToken, async (req, res) => {
-  // Check if the player_id is present in the request body
-  if (!req.body.player_id) {
-    return res.status(400).send("player_id is required. （゜ρ゜)/");
-  }
-  // Check if the user is a player and their player_id matches the request body
-  if(req.identify.roles == "player" && req.identify.player_id == req.body.player_id){
-    // Find the user's achievements in the database
-    let user = await client
-      .db("Assignment")
-      .collection("players")
-      .findOne({
-        player_id: req.body.player_id,
-        achievements: { $exists: true },
-      });
-    // If the user is not found, return a 404 error
-    if (!user) {
-      res.status(404).send("Find a way to get your achievements. (。-ω-)ﾉ");
-    }
-    // Send the user's achievements
-    res.send(user.achievements);
-  } else {
-    // If the user is not authorized, return a 401 error
-    return res.status(401).send("You are not authorised to view the achievements of this player");
-  }
-});
-
 // An API to read the battle record of a player
 app.get("/read_battle_record/:player_name",verifyToken, async (req, res) => {
   // Check if the user is a player and their name matches the request parameters
