@@ -7,6 +7,7 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static("public"));
+
 //API FOR ADMIN
 //login for admin
 app.post("/adminLogin", async (req, res) => {
@@ -981,6 +982,10 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
       //If the player does not exist, return an error
       return res.status(400).send("User or email are wrong ༼☯﹏☯༽");
     }
+    //Read the chest existance
+    let chest = await client.db("Assignment").collection("chests").findOne({
+      chest: req.body.chest,
+    });
     // Randomly select a character from the characters array
     let character_in_chest = await client
       .db("Assignment")
