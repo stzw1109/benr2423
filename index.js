@@ -9,6 +9,10 @@ app.use(express.json())
 
 //e.g using for registration
 app.post('/register',async(req,res) => {
+  if(req.body.username == null || req.body.password == null){
+      return res.status(401).send("Please enter username and password")
+  };
+  
   let existing  = await client.db("Restful_API").collection("user").findOne({
     name: req.body.username
   });
@@ -29,6 +33,36 @@ app.post('/register',async(req,res) => {
   }
 })
 
+// user login api 
+app.post('/login', async (req, res) => {
+  // step #1: req.body.username ??
+  if (req.body.username != null && req.body.password != null) {
+    let result = await client.db("maybank2u").collection("users").findOne({
+      username: req.body.username
+    })
+
+    if (result) {
+      // step #2: if user exist, check if password is correct
+      if (bcrypt.compareSync(req.body.password, result.password) == true) {
+        // password is correct
+        var token = jwt.sign(
+          { _id: result._id, username: result.username, name: result.name },
+          'passwordorangsusahnakhack'
+        );
+        res.send(token)
+      } else {
+        // password is incorrect
+        res.status(401).send('wrong password')
+      }
+
+    } else {
+      // step #3: if user not found
+      res.status(401).send("username is not found")
+    }
+  } else {
+    res.status(400).send("missing username or password")
+  }
+})
 
 app.post('/login',async(req,res) => { 
 
