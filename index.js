@@ -37,7 +37,7 @@ app.post('/register',async(req,res) => {
 app.post('/login', async (req, res) => {
   // step #1: req.body.username ??
   if (req.body.username != null && req.body.password != null) {
-    let result = await client.db("maybank2u").collection("users").findOne({
+    let result = await client.db("Restful_API").collection("user").findOne({
       name: req.body.username
     })
 
@@ -95,17 +95,29 @@ app.patch('/update/:id',verifyToken,async(req,res) => {
       if(req.identify._id != req.params.id){
         return res.status(400).send('Unauthorized access');
       }
-      
-      let require = await client.db("testing").collection("file_1").updateOne({
+
+      if(req.body.username == null){
+        return res.status(400).send('Please enter username');
+      }
+
+      let existing_username = await client.db("Restful_API").collection("user").findOne({
+        name: req.body.username
+      })
+
+      if(!existing_username){
+        let require = await client.db("Restful_API").collection("user").updateOne({
         _id: new ObjectId(req.params.id)
       },{
         $set:{
-          username: req.body.username
+          name: req.body.username
         }
       });
-
       res.send(require);
-    console.log(req.body);
+      console.log(req.body);
+
+      }else{
+        res.status(400).send('username already exist');
+      }
 })
 
 //delete user profile
@@ -148,7 +160,7 @@ function verifyToken(req, res, next) {
 
   if (token == null) return res.sendStatus(401)
 
-  jwt.verify(token, "digga", (err, decoded) => {
+  jwt.verify(token, "passwordorangsusahnakhack", (err, decoded) => {
     console.log(err)
 
     if (err) return res.sendStatus(403)
