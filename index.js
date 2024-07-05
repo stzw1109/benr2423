@@ -12,7 +12,7 @@ app.post('/register',async(req,res) => {
   if(req.body.username == null || req.body.password == null){
       return res.status(401).send("Please enter username and password")
   };
-  
+
   let existing  = await client.db("Restful_API").collection("user").findOne({
     name: req.body.username
   });
@@ -38,7 +38,7 @@ app.post('/login', async (req, res) => {
   // step #1: req.body.username ??
   if (req.body.username != null && req.body.password != null) {
     let result = await client.db("maybank2u").collection("users").findOne({
-      username: req.body.username
+      name: req.body.username
     })
 
     if (result) {
@@ -64,36 +64,6 @@ app.post('/login', async (req, res) => {
   }
 })
 
-app.post('/login',async(req,res) => { 
-
-      let resp = await client.db("Restful_API").collection("user").findOne({
-        name: req.body.username
-});
-  console.log(resp);
-  console.log(req.body);
-
-      if(!resp){
-        res.send('User not found');
-      }else{
-       // Check if password is provided
-        if (req.body.password) {
-          if (bcrypt.compareSync(req.body.password, resp.password)) {
-            var token = jwt.sign({ _id: resp._id,username: resp.name, password:resp.password, gender: resp.gender}, 'digga',{expiresIn:"1h"});
-            console.log(`login successful. Welcome ${resp.name}`);
-            res.send(token);
-            
-          } else {
-            res.send('Wrong Password');
-          }
-        } else {
-          // Handle case where password is not provided
-          // This is where you might decide to return an error or a specific message
-          res.send('Password field is missing');
-        }
-      }
-      
-});
-
 app.post('/buy',verifyToken,async(req,res)=>{
   const token = req.headers.authorization.split(" ")[1];
   console.log(`Token: ${token} `);
@@ -102,15 +72,12 @@ app.post('/buy',verifyToken,async(req,res)=>{
   console.log(req.identify);
   res.send(req.identify);
   
-
 })
 
 //get read user profile
-app.get('/read/:id',async(req,res) => {
-  const token = req.headers.authorization.split(" ")[1];
-  var decoded = jwt.verify(token, 'digga');
+app.get('/read/:id',verifyToken,async(req,res) => {
   
-  if(decoded._id == req.params.id){
+  if(req.identify._id == req.params.id){
     let rep = await client.db("Restful_API").collection("user").findOne({
       _id: new ObjectId(req.params.id)
     });
@@ -120,13 +87,15 @@ app.get('/read/:id',async(req,res) => {
   }else{
     res.status(400).send('Unauthorized access');
   }
-   
   //console.log(rep);
  })
 
 //update user profile
-app.patch('/update/:id',async(req,res) => {
-
+app.patch('/update/:id',verifyToken,async(req,res) => {
+      if(req.identify._id != req.params.id){
+        return res.status(400).send('Unauthorized access');
+      }
+      
       let require = await client.db("testing").collection("file_1").updateOne({
         _id: new ObjectId(req.params.id)
       },{
