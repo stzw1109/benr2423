@@ -128,3 +128,15 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+#etc
+/node_modules
+Assignment.battle_record.json
+Assignment.characters_of_players.json
+Assignment.chests.json
+Assignment.characters.json
+Achievements.js
+Assignment.players.json
+characters.txt
+chest.txt
+user_login.html
