@@ -135,7 +135,7 @@ app.delete('/delete/:id',verifyToken,async(req,res) => {
 
 
 app.get('/', (req, res) => {
-   res.send('Testing for class!')
+   res.send('Testing la bodoh!')
 })
 
 app.listen(port, () => {
